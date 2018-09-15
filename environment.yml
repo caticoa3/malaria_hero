@@ -1,0 +1,20 @@
+name: Python3.5
+channels:
+  - conda-forge
+  - menpo
+  - defaults
+dependencies:
+  - python=3.5.4
+  - matplotlib
+  - cloudpickle
+  - httplib2
+  - ipywidgets
+  - pandas
+  - scipy
+  - Theano
+
+  - pip:
+    - keras
+    - selenium
+    - tensorflow
+    - tensorflow-tensorboard

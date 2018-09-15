@@ -1,0 +1,6 @@
+/home/atico/anaconda3/envs/cellprofiler/lib/python2.7/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+/home/atico/anaconda3/envs/cellprofiler/lib/python2.7/site-packages/cellprofiler/utilities/hdf5_dict.py:527: FutureWarning: Conversion of the second argument of issubdtype from `int` to `np.signedinteger` is deprecated. In future, it will be treated as `np.int64 == np.dtype(int).type`.
+  np.issubdtype(hdf5_type, int) or
+/home/atico/anaconda3/envs/cellprofiler/lib/python2.7/site-packages/cellprofiler/utilities/hdf5_dict.py:529: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  hdf5_type_is_float = np.issubdtype(hdf5_type, float)
