@@ -70,18 +70,21 @@ for i, file in enumerate(png_files):
     n_blobs = len(keypoints)
     add_blob_size = 0
     if n_blobs > 0:
-        cv_df.loc[i,'blob_detected'] = True
+        cv_df.loc[i,'blob_detected'] = 1
         cv_df.loc[i,'num_of_blobs'] = n_blobs
         #Average diameter BLOBs in range(0,keypoints) 
         for blob in list(range(n_blobs)):
 #            print(blob)
-            add_blob_size += keypoints[blob].size  
+            add_blob_size += keypoints[blob].size
         cv_df.loc[i, 'average_blob_area'] = add_blob_size/n_blobs
+    else:
+        cv_df.loc[i,'blob_detected'] = 0
 
 # Draw detected blobs as red circles.
 # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
     if draw_blobs:
-        im_with_keypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        im_with_keypoints = cv2.drawKeypoints(image, keypoints, np.array([]),
+                                (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         
         # Show keypoints
         cv2.imshow("Keypoints", im_with_keypoints)
@@ -108,8 +111,7 @@ for i, file in enumerate(png_files):
     cv_df.loc[i, 'cell_eccentricity'] = measure.regionprops(thresh)[largest_region_idx].eccentricity
     
     #Solidity: Ratio of pixels in the region to pixels of the convex hull image
-    cv_df.loc[i, 'cell_solidity'] = measure.regionprops(thresh).solidity
-    
+    cv_df.loc[i, 'cell_solidity'] = measure.regionprops(thresh)[largest_region_idx].solidity
 
 #Normalize some value by area
 #cv_df[['norm_avg_blue','norm_avg_green','norm_avg_red']
@@ -118,19 +120,23 @@ for i, file in enumerate(png_files):
 #    cv_df.drop(columns=['norm_avg_blue','norm_avg_green','norm_avg_red'],inplace=True)
 
 #Reorder columns
-cv_df = cv_df[['label', 'fn', 'cell_area','cell_eccentricity','average_blue', 
-               'average_green', 'average_red','blob_detected', 'num_of_blobs', 
-               'average_blob_area']]
+cv_df = cv_df[['label', 'fn', 'cell_area','cell_eccentricity','cell_solidity',
+               'average_blue', 'average_green', 'average_red', 'blob_detected',
+               'num_of_blobs', 'average_blob_area']]
 cv_df.to_csv(cv_features_file)
+
+# -- plot histograms of features
+cv_df = pd.read_csv(cv_features_file, index_col=0)
 
 label_set = set(cv_df.label)
 label_list = list(label_set)
-colors_dict = {label_list[0]:'red', label_list[1]:'green'}
+colors_dict = {label_list[0]:'#ff9933', label_list[1]:'#3399ff'}
+zorders = {label_list[0]:1, label_list[1]:0 }
 
 cv_df.fillna(0,inplace=True)
 cv_df['blob_detected'] = cv_df['blob_detected']*1
 #cv_df.groupby('label').hist(alpha=0.4)
-fig, subplots = plt.subplots(2, 4, squeeze=True, figsize=(15,8.5))
+fig, subplots = plt.subplots(2, 5, squeeze=True, figsize=(15,8.5))
 subplots = subplots.ravel()
 for z, col in enumerate(list(cv_df.columns[2:])):
     ax=subplots[z]
@@ -138,23 +144,28 @@ for z, col in enumerate(list(cv_df.columns[2:])):
     print(z)
     #Randomly sample a smaller set
     for key, group in cv_df.groupby('label'):
-        group[col].plot(ax=ax, color = colors_dict[key],
+        group[col].plot(ax=ax, color = colors_dict[key], zorder = zorders[key],
                     kind='hist',alpha=0.6, label=col)
     ax.set_title(col)
-    ax.legend().set_visible(False)
+    if (z != 0) or (z != 4):
+        ax.legend().set_visible(False)
+    ax.tick_params(direction = 'in')
 
 # -- adding figure legend
-lp = lambda k: plt.plot([],color=colors_dict[k],ms=np.sqrt(25), mec="none",
-                      label="{}".format(k), ls="", marker="o")[0]
+lp = lambda k: plt.plot([], color=colors_dict[k], ms=10, mec="none",
+                      label="{}".format(k), ls="", marker="s", alpha = 0.6)[0]
             
 handles = [lp(k) for k in label_list]
-plt.figlegend(handles, loc='upper left', borderaxespad=0., ncol=2)
-plt.suptitle('Extracted Features from Segmented Cells')
-fig.tight_layout()
-plt.subplots_adjust(top=0.915, bottom=0.045, left=0.02, right=0.988,
-                    hspace=0.2, wspace=0.1)
-plt.show(fig)
+            
+plt.tight_layout()
+plt.subplots_adjust(top=0.88, bottom=0.11, left=0.075, right=0.975, 
+                    hspace=0.2, wspace=0.345)
+plt.figlegend(handles, ['Infected','Normal'], 
+              loc='upper right', borderaxespad=0.5, ncol=2, prop={'size': 10})
+plt.suptitle('Extracted Features from Segmented Cells', fontsize= 20)
 
+plt.show(fig)
+plt.savefig('../plots/basic_feat_hists.png')
 #cv2.waitKey(0);
 #cv2.destroyAllWindows()
 

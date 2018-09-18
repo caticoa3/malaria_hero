@@ -153,7 +153,7 @@ def caa_plot_pairs(X, labels_DF, *args):
     label_series = labels_DF.loc[:,'label']
     label_set = set(label_series)
     label_list = list(label_set)
-    print(label_set)
+    print('set of labels', label_set)
     # -- plotting
     if (n_comp < 21):
         print('plotting scatter plots...')
@@ -167,8 +167,8 @@ def caa_plot_pairs(X, labels_DF, *args):
                                         (len(comp_list)+0.5)/comp_list[-1][0]),
                                          squeeze=True,figsize=(15,8.5))
         else:
-            fig, subplots = plt.subplots(comp_list[-1][0]-2,round(
-                                         len(comp_list)/(comp_list[-1][0]-2)),
+            fig, subplots = plt.subplots(comp_list[-1][0]-1,round(
+                                         len(comp_list)/(comp_list[-1][0]-1)),
                                          figsize=(15,8.5))
         subplots = subplots.ravel()
         print('subplots length', len(subplots))

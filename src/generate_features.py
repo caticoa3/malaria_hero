@@ -20,8 +20,7 @@ class FeatureGen(object):
 
     def load_graph(self):
         self.model_filename = os.path.join(
-            os.environ['FEATURE_GEN'], 'models',
-            'classify_image_graph_def.pb')
+            '../models','classify_image_graph_def.pb')
 
         with tf.Session() as sess:
             with gfile.FastGFile(self.model_filename, 'rb') as f:

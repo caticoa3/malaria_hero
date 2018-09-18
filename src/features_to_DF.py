@@ -20,10 +20,11 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
     # for loop picks out jpg captures of webpages saved in labeled
     # subdirecotries of the 'dataset' folder
     saved_feat_data = Path(bn_features_file)
-    jpg_files = Path(image_dir).glob('**/*.png')
-    print(len(list(jpg_files)))
-    len_jpg_file = sum(1 for _ in jpg_files)
-    print('len_jpg_file', len_jpg_file)
+    img_files = Path(image_dir).glob('**/*.png')
+
+    len_img_file = len(list(img_files))
+    print(len_img_file)
+    print('len_img_file', len_img_file)
     for i, file in enumerate(Path(image_dir).glob('**/*.png')):
         size = os.stat(str(file)).st_size
         if size < 100:
@@ -82,8 +83,8 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
             # Save all extracted features after every forty images
             feat_df.to_csv(bn_features_file)
             print('\nSaved features for', i, 'webpage images;',
-                  str(len_jpg_file - i), 'image ramain.\n', sep=' ')
-        elif i > (len_jpg_file - 40):
+                  str(len_img_file - i), 'image ramain.\n', sep=' ')
+        elif i > (len_img_file - 40):
             feat_df.to_csv(bn_features_file)
 
     if min_samples > 0:

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec 31 18:41:44 2017
+Created on Tue Sep 18 2018
 
-@author: carlos
+@author: carlos atico ariza
 """
 
 #Webpage interface for image-based webpage classification
-#Ask for a file with URLs
+#Ask for a directory with png images
 import os
 from flask import Flask, request, redirect, url_for, render_template, flash, send_from_directory
 from flask_wtf import FlaskForm
@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 from web_img_class_API import web_img_class
 
 UPLOAD_FOLDER = '../flask/uploads'
-ALLOWED_EXTENSIONS = set(['csv','txt'])
+ALLOWED_EXTENSIONS = set(['csv','txt','png'])
 
 app =  Flask(__name__)
 app.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
@@ -41,7 +41,7 @@ def img_classfier():
             print('Training with', form.sample_min.data, 'or greater samples for each class')    
 
     if request.method == 'POST':
-        print('Uploaded file', request.files['file'].filename)
+        print('Uploaded files', request.files.getlist('file[]')) #filename)
         # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
@@ -54,14 +54,13 @@ def img_classfier():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            feat_filename = ''.join([filename.split('.')[0],'_feat.csv'])
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            classify = web_img_class(csv_file1 = filename,\
-                                     trained_model = 'trained_RF.sav',\
-                                     features_file1= feat_filename,\
-                                     image_dir1 = '../webcapture/prod_test/',
+            classify = web_img_class(image_dir = UPLOAD_FOLDER,\
+                                     prediction_csv = 'predictions.csv',\
+                                     trained_model = '../models/trained_RF.sav',\
+                                     features_file1= '../results/prod_test_feat.csv',\
                                      min_samples1 = form.sample_min.data,\
-                                     training1=form.training.data)
+                                     training1= form.training.data)
             return render_template('classify_out.html',\
                                    file_loc = url_for('uploaded_file',filename=filename),\
                                    features_file = feat_filename,\
@@ -76,10 +75,10 @@ def uploaded_file(filename):
 
 ############################ How to use #######################################
 
-# Make current working directory same as location of anom_api.py
-# cd run
+# Make current working directory same as location of web_img_class_API.py
+# cd src
 # In terminal enter:
-# python anom_api.py
+# python flask_app.py
 # In another terminal run the following example:
 # curl -F "file=@../data/generated_data.csv" http://0.0.0.0:5000
 

@@ -50,24 +50,33 @@ from pair_scatter_plots import plot_pca, seaborn_pairwise_plot, caa_plot_pairs
 
 # In[2]:
 
-def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100, 
+def ML_with_CV_feat(cv_feat_file='../data/cv_feat.csv', n_comp=100, 
                     plotting=False):
-    if n_comp < 50:
-        n_comp = 50
+            
     # Importing the bottleneck features for each image
-    feat_df = pd.read_csv(bn_feat_file, index_col=0, dtype='unicode')
-    feat_df = feat_df.sample(frac=0.5)
-    print('Data frame shape:', feat_df.shape)
+    feat_df = pd.read_csv(cv_feat_file, index_col=0, dtype='unicode')
+    feat_df = feat_df.sample(frac=0.01)
+    column_names = feat_names = list(feat_df.columns)
+    print(column_names)
+    for x in ['label','fn']:
+        feat_names.remove(x)
 #    feat_df = feat_df.iloc[0:300,:]
     mask = feat_df.loc[:, 'label'].isin(['Parasitized', 'Uninfected'])
     feat_df = feat_df.loc[mask, :].drop_duplicates()
-    print('Number of bottleneck features:', feat_df.shape[1]-7)
+    
+    if len(feat_names) < 50:
+        n_comp = len(feat_names)
+
+    
+    print('Number of features:', len(feat_names))
     y = feat_df.loc[:,['label']].values
     print(type(y), y.shape)
 
     print('Number of samples for each label \n', feat_df.groupby('label')['label'].count())
-    X = feat_df.loc[:, 'x0':'x2047'].astype(float).values
-#    print(list(feat_df.loc[:, 'x0':].columns))
+#    print(feat_df.head())
+    X = feat_df.loc[:, feat_names].astype(float).values
+    print('/nColumn feat names after placing into X',
+          list(feat_df.loc[:, feat_names].columns))
     
     ##-- Dealing with imbalanced data
     
@@ -107,7 +116,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     # Use n_components = None first to determine variability of principle components
     # Then limit the number of principle components that are reasonable
     # n_components=None --> min(n observation, n features)
-    print('...running PCA analysis...''')
+    print('...starting PCA analysis...')
     pca_none = PCA(n_components=None)  
     pca_none.fit_transform(X_train)
 #    print(X_test.shape, type(X_test))
@@ -121,8 +130,10 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.xlabel('n_components')
     plt.ylabel('variance')
     plt.suptitle('Explained Variance of Principle Components')
-#    plt.show(block=False)
-    plt.savefig('../plots/pca_var_vs_ncomp.png')
+#    plt.ion()
+    plt.show(block=False)
+#    plt.show()
+    plt.savefig('../plots/cv_feat_pca_var_vs_ncomp.png')
 
     # #### After about 70 components there is very little variance gain  ####
     # Applying Principle Component Decomposition
@@ -131,7 +142,6 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
 
 
 #    n_comp = 11 # the number of Principal Components to project/decompose the data into
-    print('...running PCA with', n_comp, 'components')
     pca = PCA(n_components=n_comp)
     X_train = pca.fit_transform(X_train)
     X_test = pca.transform(X_test)
@@ -141,8 +151,8 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.xlabel('n_components')
     plt.ylabel('variance')
     plt.suptitle('Explained Variance of Principle Components')
-#    plt.show(block=False)
-    plt.savefig('../plots/pca_var_vs_{}_ncomp.png'.format(n_comp))
+    plt.show()
+    plt.savefig('../plots/cv_feat_pca_var_vs_{}_ncomp.png'.format(n_comp))
 
     # Save feature reduction PCA
     save_PCA = '../models/trained_PCA.sav'
@@ -151,8 +161,9 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     # In[6]:
     if plotting:
         # Pairwise plots of 11 PCA, note this only works with two labels
+#        print('y_train', y_train[:,0])
         feat_df_ploting = pd.DataFrame({'label': y_train[:,0]})
-        caa_plot_pairs(X_train[:, :11], feat_df_ploting, 'PCA')
+        caa_plot_pairs(X_train[:, :n_comp], feat_df_ploting, 'PCA')
         plt.figure(figsize=(16, 24))
         plt.show(block=False)
     
@@ -195,15 +206,8 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
 #            print('ValueErorr for', date, 'continuing with next date.')
 #            continue
 
-    #Isomap? tsne?
-    
-    #tsne
-    
-
     # ## Exploring Different Algorithms For Mutliclass Classfication
-    # ### OneVsRestClassifier with Naive Baise
-    
-
+    # ### OneVsRestClassifier with Naive Baise    
     
     # In[7]:
 
@@ -214,14 +218,16 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     nbclf = classifier.fit(X_train, df_y_train['label'])
     y_test_predictions_nbclf = nbclf.predict(X_test)
     y_predict_prob = nbclf.predict_proba(X_test)
-    cv_scores = cross_val_score(classifier, X, y)
+    #Perform 3-fold cross validation and return the mean accuracy on each fold    
+    cv_scores = cross_val_score(classifier, X, y) #default 3-fold cross validation
     print('NB cv_scores', cv_scores)
+    #what is each cv_score?
 #    answer = pd.DataFrame(y_predict_prob, columns = class_names).round(decimals=3) # index= pd.DataFrame(X_test).index.tolist())
     #print('One vs Rest - Naive Baise\n', answer.head())
 
     # Confusion Matrix for Naive Baise
     cmNB = confusion_matrix(y_test, y_test_predictions_nbclf, labels=list(class_names))
-    plt.subplot(1, 3, 1)
+    plt.subplot(1, 3, 1);
     plot_confusion_matrix(cm1=cmNB, classes=class_names, normalize=False, gradientbar=False,
                           title='One vs Rest - Naive Baise\nConfusion matrix')
     plt.text(0.01, 0, 'NB cv_scores:\n'+ str(cv_scores), ha='left',
@@ -241,7 +247,8 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     y_test_predictions_RF = RFclf.predict(X_test)
 #    y_score_RF = RFclf.predict_proba(X_test)
     y_score_answer_RF = RFclf.predict_proba(X_test)
-    cv_scores_RF = cross_val_score(RFclf, X, y)
+    #Perform 3-fold cross validation and return the mean accuracy on each fold    
+    cv_scores_RF = cross_val_score(RFclf, X, y) #default 3-fold cross validation
     print('Random Forest cv_scores', cv_scores_RF)
 #    answer_RF = pd.DataFrame(y_score_answer_RF)
     save_RF = '../models/trained_RF.sav'
@@ -265,8 +272,9 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     AdaBoost.fit(X_train, y_train)
     y_predAB = AdaBoost.predict(X_test)
 #    y_predAB_binarized = label_binarize(y_predAB,
-#                                              classes=['single_product','market_place'])
-    cv_scores_AB = cross_val_score(AdaBoost, X, y)
+#                                     classes=['single_product','market_place'])
+    #Perform 3-fold cross validation and return the mean accuracy on each fold
+    cv_scores_AB = cross_val_score(AdaBoost, X, y) #default 3-fold cross validation
     print('Adaptive Boosting cv_scores', cv_scores_AB)
     save_AdaBoost = '../models/trained_AdaBoost.sav'
     pickle.dump(AdaBoost, open(save_AdaBoost, 'wb'))
@@ -277,7 +285,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
                           title='AdaBoost\nConfusion matrix', gradientbar=False)
     plt.text(0.01, 0, 'Adaptive Boosting cv_scores:\n'+ str(cv_scores_AB), ha='left',
              va='bottom', transform=plt.subplot(1, 3, 3).transAxes)
-    plt.savefig('../plots/confusion_matrix_result.png')
+    plt.savefig('../plots/cv_confusion_matrix_result.png')
 
     # #### Comparing mean accuracy and confusion matrices of difference classification algorithrms
 
@@ -290,10 +298,8 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     print('If launched from command line use ctrl+c to close all plots and finish')
     plt.show()
 
-
 if __name__ == '__main__':
     import sys
-    ML_with_BN_feat(bn_feat_file=sys.argv[1], n_comp=int(sys.argv[2]), 
-                    plotting=sys.argv[3])
+    ML_with_CV_feat(cv_feat_file=sys.argv[1], n_comp=int(sys.argv[2]), plotting=sys.argv[3])
 # Command line use:
-# python ML_with_BN_features.py ../data/filtered_bn_feat.csv 100
+# python ML_with_CV_features.py ../data/filtered_bn_feat.csv 100 False

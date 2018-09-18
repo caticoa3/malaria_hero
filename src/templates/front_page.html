@@ -1,0 +1,21 @@
+<!doctype html>
+<title>Malria-based Webpage Classifier</title>
+<h1>Image-based Blood Smear Malaria Classifier</h1>
+Please select an folder with images of cells.
+
+<br />The image type allowed is .png.
+<br />If you are training the classifier the images files should organized in
+<br />directories titled parasitized or uninfect.
+
+<form method=post enctype=multipart/form-data>
+  <p><input type=file name=file>
+      {{ form.csrf_token }}
+      {{ form.training  }}
+      {{ form.sample_min  }}
+      {{ form.sample_min.label  }}
+  <p><input type="submit" value="submit">
+</form>
+
+<br />Disclaimer: This is meant to demonstrate the ability of machine learning to 
+classifty medical images. Please see a licensed professional if you think you 
+have Malaria. 
