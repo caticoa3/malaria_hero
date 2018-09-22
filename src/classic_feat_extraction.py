@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from pathlib import Path
 from skimage import measure
+from pair_scatter_plots import seaborn_pairwise_plot, caa_plot_pairs
 
 image_dir = '../datasets/cell_images/'
 parasitic_example = '../datasets/cell_images/Parasitized/C33P1thinF_IMG_20150619_121229a_cell_177.png'
@@ -125,12 +126,14 @@ cv_df = cv_df[['label', 'fn', 'cell_area','cell_eccentricity','cell_solidity',
                'num_of_blobs', 'average_blob_area']]
 cv_df.to_csv(cv_features_file)
 
+# In[]:
+
 # -- plot histograms of features
 cv_df = pd.read_csv(cv_features_file, index_col=0)
 
 label_set = set(cv_df.label)
 label_list = list(label_set)
-colors_dict = {label_list[0]:'#ff9933', label_list[1]:'#3399ff'}
+colors_dict = {label_list[0]:'#3399ff', label_list[1]:'#ff9933'}
 zorders = {label_list[0]:1, label_list[1]:0 }
 
 cv_df.fillna(0,inplace=True)
@@ -145,7 +148,7 @@ for z, col in enumerate(list(cv_df.columns[2:])):
     #Randomly sample a smaller set
     for key, group in cv_df.groupby('label'):
         group[col].plot(ax=ax, color = colors_dict[key], zorder = zorders[key],
-                    kind='hist',alpha=0.6, label=col)
+                    kind='hist',alpha=0.6, label=col)        
     ax.set_title(col)
     if (z != 0) or (z != 4):
         ax.legend().set_visible(False)
@@ -166,6 +169,28 @@ plt.suptitle('Extracted Features from Segmented Cells', fontsize= 20)
 
 plt.show(fig)
 plt.savefig('../plots/basic_feat_hists.png')
+
+# In[]:
+# Plot pairwise plots
+plt.close()
+feat_names = ['cell_area','cell_eccentricity','cell_solidity',
+              'average_blue', 'average_green', 'average_red', 'blob_detected',
+              'num_of_blobs', 'average_blob_area']
+
+g = seaborn_pairwise_plot(cv_df, color_index='label', 
+                          color_order = ['Parasitized','Uninfected'],
+                          feature_names=feat_names,
+                          n_comp=None)
+plt.tight_layout()
+plt.subplots_adjust(top=0.94, bottom=0.06, left=0.07, right=0.91, hspace=0.04,
+wspace=0.025)
+plt.yticks(rotation=30)
+plt.ylabel(feat_names,rotation=30)
+plt.show()
+plt.savefig('../plots/seaborn_pp_basic_feat.png',dpi=450)
+
+#caa_plot_pairs(X=cv_df.loc[:,feat_names], labels_DF=cv_df.loc[:,['label']])
+  
 #cv2.waitKey(0);
 #cv2.destroyAllWindows()
 

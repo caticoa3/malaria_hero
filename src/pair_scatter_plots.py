@@ -123,10 +123,10 @@ def plot_pca(X, labels_DF, enable_plotting=True):
             
         print('...scatter plots saved in ../plots/ folder')
 
-def seaborn_pairwise_plot(feat_df, color_index=None, feature_names=None,
-                          n_comp=None):
+def seaborn_pairwise_plot(feat_df, color_index=None, color_order = None,
+                          feature_names=None, n_comp=None):
     pp = seaborn.pairplot(feat_df, vars=feature_names, 
-                     hue=color_index, #hue_order = order, #size=5, #aspect=7,
+                     hue=color_index, hue_order = color_order, #size=5, #aspect=7,
                      markers='.',
                      plot_kws=dict(s=15, linewidth=0),
                      grid_kws=dict(despine = False))
@@ -137,8 +137,10 @@ def seaborn_pairwise_plot(feat_df, color_index=None, feature_names=None,
     plt.tight_layout()
     plt.subplots_adjust(top=0.94,wspace=0.04, hspace=0.04, bottom=0.06, 
                         left= 0.04)
+    if n_comp == None:
+        n_comp = len(feature_names)
     plt.suptitle('{} Principle Components'.format(n_comp))
-    pp.savefig('../plots/{0}_PC-seaborn_pairplots.png'.format(n_comp),
+    pp.savefig('../plots/{0}_comp_seaborn_pairplots.png'.format(n_comp),
                dpi=500)
 
 def caa_plot_pairs(X, labels_DF, *args):
@@ -238,9 +240,9 @@ def caa_plot_pairs(X, labels_DF, *args):
         cmap = matplotlib.cm.get_cmap('rainbow')
         
         color_fraction = np.linspace(0,1,len(label_list)) #,endpoint=False)
-        colors_dict = {}
-        for i, fraction in enumerate(color_fraction):
-            colors_dict[label_list[i]] = cmap(fraction)
+        colors_dict = {label_list[0]:'#3399ff', label_list[1]:'#ff9933'}
+#        for i, fraction in enumerate(color_fraction):
+#            colors_dict[label_list[i]] = cmap(fraction)
         
 #        print('length of colors', len(colors))
 #        print('colors', colors)

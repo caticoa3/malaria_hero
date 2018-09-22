@@ -5,7 +5,7 @@ Created on Tue Sep 18 2018
 
 @author: carlos atico ariza
 """
-
+import os
 import pickle
 import pandas as pd
 from features_to_DF import gen_bn_features
@@ -17,7 +17,7 @@ import sys
 #test_pipe.to_csv('test_pipe.csv', index = False)
 
 def web_img_class(image_dir= [], prediction_csv = 'predictions.csv', 
-                  trained_model = '../models/trained_RF.sav',
+                  trained_model = '../models/trained_AB.sav',
                   features_file1 = 'prod_test_feat.csv',
                   min_samples1 = 0, training1 = False):
     '''This function captures a snapshot of a webpage and classifies the type 
@@ -66,7 +66,9 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     #https://machinelearningmastery.com/save-load-machine-learning-models-python-scikit-learn/
     loaded_model = pickle.load(open(trained_model, 'rb'))
     predictions = loaded_model.predict(X_reduced)
-#   probabilities = loaded_model.predict_proba(X_reduced)
+    probabilities = loaded_model.predict_proba(X_reduced)
+    positive_prob = probabilities[:,0]
+    print('probabilities', positive_prob)
     if training1:
         # Runs if training flag is set to True
         # Place labeles into a array for training
@@ -82,7 +84,8 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     #Load csv file into pandas dataframe
     #add predicted labels and save a new csv
     files_processed = bn_feat.loc[:,['fn']]
-    files_processed = files_processed.assign(predicted_label= predictions)
+    files_processed = files_processed.assign(Predicted_label= predictions)
+    files_processed = files_processed.assign(Parasitized_probability = positive_prob)
     files_processed.to_csv('../results/predicted_{}'.format(prediction_csv))
     
 #    print(files_processed)
@@ -95,6 +98,21 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     
     #Output predicted classifications
 #web_img_class('test_pipe.csv', '../models/trained_RF.sav', 'prod_test_feat.csv', 0 ,False)
+
+#For making list of uploaded files given a path
+def make_tree(path):
+    tree = dict(name=os.path.basename(path), children=[])
+    try: lst = os.listdir(path)
+    except OSError:
+        pass #ignore errors
+    else:
+        for name in lst:
+            fn = os.path.join(path, name)
+            if os.path.isdir(fn):
+                tree['children'].append(make_tree(fn))
+            else:
+                tree['children'].append(dict(name=name))
+    return tree
 
 if __name__ == '__main__':
     web_img_class(image_dir = sys.argv[1], prediction_csv = sys.argv[2],

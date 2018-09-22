@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y \
 # Add the user that will run the app (no need to run as root)
 #RUN groupadd -r myuser && useradd -r -g myuser myuser
 
-#Setting the working directory to /awoo
-WORKDIR /awoo
+#Setting the working directory to /insight
+WORKDIR /insight
 
 #Copy the requirements for setting up the evironment
-ADD $FEATURE_GEN/requirements_conda.txt /awoo/
-ADD $FEATURE_GEN/requirements_pip.txt /awoo/
+ADD $INSIGHT/requirements_conda.txt /insight/
+ADD $INSIGHT/requirements_pip.txt /insight/
 
 #Installing python3.5.4 and required libraries
 RUN conda update conda
@@ -30,14 +30,14 @@ RUN conda install --yes --file requirements_conda.txt
 #Creating the environemnt with conda env did not work in docker
 RUN pip install -r requirements_pip.txt
 
-#Copy the $FEATURE_GEN contents into the container at /awoo
-ADD $FEATURE_GEN /env_for_awoo/
+#Copy the $INSIGHT contents into the container at /insight
+ADD $INSIGHT /insight/
 
 # Install myapp
-#RUN chown -R atico:atico /awoo/*
+#RUN chown -R atico:atico /insight/*
 
-ENV NAME awoo
+ENV NAME insight
 
-WORKDIR /awoo/src/
+WORKDIR /insight/src/
 
 CMD python flask_app.py

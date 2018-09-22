@@ -1,3 +1,6 @@
+presentations/*
+flask/uploads*
+plots*
 *datasets
 *csv
 src/ghostdriver.log

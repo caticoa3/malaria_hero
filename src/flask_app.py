@@ -13,7 +13,7 @@ from flask import Flask, request, redirect, url_for, render_template, flash, sen
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, RadioField
 from werkzeug.utils import secure_filename
-from web_img_class_API import web_img_class
+from web_img_class_API import web_img_class, make_tree
 
 UPLOAD_FOLDER = '../flask/uploads'
 ALLOWED_EXTENSIONS = set(['csv','txt','png'])
@@ -31,48 +31,67 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# future work: https://flask-dropzone.readthedocs.io/en/latest/index.html
+#using dropzone-js-resources
+
 @app.route('/', methods=['GET', 'POST'])
 def img_classfier():
-    
+        
     form = UserInput()
     
     if form.validate_on_submit():
+        for the_file in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+            except Exception as e:
+                print(e)
+#            
         if form.training.data: #form.training.data value is True or False
             print('Training with', form.sample_min.data, 'or greater samples for each class')    
 
-    if request.method == 'POST':
-        print('Uploaded files', request.files.getlist('file[]')) #filename)
+#    if request.method == 'POST':
+        files = request.files.getlist('file', None)
+        print('Uploaded files', files) #filename)
         # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
+#        if 'file' not in files:
+#            flash('No file part')
+#            return redirect(request.url)
         # if user does not select file, browser also
         # submit a empty part without filename
-        if file.filename == '':
+        if files == '':
             flash('No selected file')
             return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            classify = web_img_class(image_dir = UPLOAD_FOLDER,\
-                                     prediction_csv = 'predictions.csv',\
-                                     trained_model = '../models/trained_RF.sav',\
-                                     features_file1= '../results/prod_test_feat.csv',\
-                                     min_samples1 = form.sample_min.data,\
-                                     training1= form.training.data)
-            return render_template('classify_out.html',\
-                                   file_loc = url_for('uploaded_file',filename=filename),\
-                                   features_file = feat_filename,\
-                                   class_output = classify)
+        for file in files:
+            print('\n',file)
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        classify = web_img_class(image_dir = UPLOAD_FOLDER,\
+                                 prediction_csv = 'predictions_flask.csv',\
+                                 trained_model = '../models/trained_log_reg.sav',\
+                                 features_file1= '../flask/uploads/prod_test_feat.csv',\
+                                 min_samples1 = form.sample_min.data,\
+                                 training1= form.training.data)
+        return render_template('classify_out.html',\
+                               file_loc = url_for('dirtree'),\
+                               features_file = '../flask/uploads/prod_test_feat.csv',\
+                               class_output = classify)
 
     return render_template('front_page.html', form=form)
+        
+
+@app.route('/uploads/')
+def dirtree():
+    path = '../flask/uploads/'
+    return render_template('dirtree.html', tree=make_tree(path))
 
 @app.route('/uploads/<filename>')
-def uploaded_file(filename):
+def uploaded_file(filename=''):
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename)
-
 ############################ How to use #######################################
 
 # Make current working directory same as location of web_img_class_API.py

@@ -5,8 +5,8 @@ import os
 from keras.utils import np_utils
 ###############################################################################
 #cross-validation at the patient level
-train_data_dir = 'f1_mal/train'
-valid_data_dir = 'f1_mal/valid'
+train_data_dir = '../../datasets/cell_images'
+valid_data_dir = '../../datasets/cell_images'
 ###############################################################################
 # declare the number of samples in each category
 nb_train_samples = 22045 #  training samples

@@ -27,11 +27,14 @@ num_epoch = 60
 base_model = applications.VGG16(weights='imagenet', include_top=False, input_shape=(100,100,3))
 
 ''' you can use the rest of the models like:
-feature_model = applications.ResNet50((weights='imagenet', include_top=False, input_shape=(224,224,3)) 
-feature_model = applications.Xception((weights='imagenet', include_top=False, input_shape=(100,100,3))
+feature_model = applications.ResNet50((weights='imagenet', include_top=False, 
+                                       input_shape=(224,224,3)) 
+feature_model = applications.Xception((weights='imagenet', include_top=False,
+                                       input_shape=(100,100,3))
 For DenseNet, the main file densenet121_model is included to this repository.
 The model can be used as :
-feature_model = densenet121_model(img_rows=img_rows, img_cols=img_cols, color_type=channel, num_classes=num_classes)
+feature_model = densenet121_model(img_rows=img_rows, img_cols=img_cols, 
+                                  color_type=channel, num_classes=num_classes)
 '''
 #extract feature from an intermediate layer
 base_model = Model(input=base_model.input, output=base_model.get_layer('block5_conv2').output) 
@@ -55,7 +58,8 @@ predictions = Dense(num_classes, activation='softmax', name='predictions')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 ###############################################################################
 # first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional layers to prevent large gradient updates wrecking the learned weights
+# i.e. freeze all convolutional layers to prevent large gradient updates 
+# wrecking the learned weights
 for layer in base_model.layers:
     layer.trainable = False
 # compile the model (should be done *after* setting layers to non-trainable)
@@ -135,10 +139,12 @@ Test_accuracy = accuracy_score(Y_valid.argmax(axis=-1),y_pred.argmax(axis=-1))
 print("Test_Accuracy = ",Test_accuracy)
 
 #declare target names
-target_names = ['class 0(abnormal)', 'class 1(normal)'] #it should be normal and abnormal for linux machines
+target_names = ['class 0(abnormal)', 'class 1(normal)'] #it should be normal 
+# and abnormal for linux machines
 
 #print classification report
-print(classification_report(Y_valid.argmax(axis=-1),y_pred.argmax(axis=-1),target_names=target_names))
+print(classification_report(Y_valid.argmax(axis=-1),y_pred.argmax(axis=-1),
+                            target_names=target_names))
 
 # Compute confusion matrix
 cnf_matrix = confusion_matrix(Y_valid.argmax(axis=-1),y_pred.argmax(axis=-1))
