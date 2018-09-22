@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /insight
 
 #Copy the requirements for setting up the evironment
-ADD $INSIGHT/requirements_conda.txt /insight/
-ADD $INSIGHT/requirements_pip.txt /insight/
+ADD requirements_conda.txt /insight/
+ADD requirements_pip.txt /insight/
 
 #Installing python3.5.4 and required libraries
 RUN conda update conda
@@ -31,13 +31,10 @@ RUN conda install --yes --file requirements_conda.txt
 RUN pip install -r requirements_pip.txt
 
 #Copy the $INSIGHT contents into the container at /insight
-ADD $INSIGHT /insight/
-
-# Install myapp
-#RUN chown -R atico:atico /insight/*
+ADD . /insight/
 
 ENV NAME insight
 
 WORKDIR /insight/src/
 
-#CMD python flask_app.py
+#CMD python flask_app.pyb
