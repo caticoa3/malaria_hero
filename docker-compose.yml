@@ -1,0 +1,19 @@
+version: '3'
+services:
+
+  api:
+    container_name: malaria # Name can be anything
+    restart: always
+    build: .
+    ports:
+      - "5000:5000"
+    command: gunicorn -w 2 -b :5000 flask_app:app
+
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    ports:
+      - "5001:5001"
+    depends_on:
+      - api

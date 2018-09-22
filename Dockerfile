@@ -40,4 +40,4 @@ ENV NAME insight
 
 WORKDIR /insight/src/
 
-CMD python flask_app.py
+#CMD python flask_app.py
