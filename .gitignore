@@ -1,5 +1,5 @@
 presentations/*
-flask/uploads*
+flask/uploads/*
 plots*
 *datasets
 *csv
