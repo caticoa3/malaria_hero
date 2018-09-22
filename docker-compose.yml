@@ -9,7 +9,7 @@ services:
        PYTHONUNBUFFERED: 'true'   
     ports:
       - "5000:5000"
-    command: gunicorn -w 2 -b :5000 flask_app:app
+    command: gunicorn -w 2 -t 10 -b :5000 flask_app:app
 
   nginx:
     container_name: nginx
