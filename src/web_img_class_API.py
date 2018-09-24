@@ -92,7 +92,7 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
 #    print(files_processed.shape)
 #    print(files_processed.columns)
     #print(files_processed.to_html())
-    return files_processed.to_html(index=False) 
+    return files_processed.to_html(index=False), files_processed, bn_feat
     #'Modified uploaded file with predictions:\n{0}'.format(urls)
     #Import data from csv into a pandas dataframe
     
