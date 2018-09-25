@@ -1,12 +1,9 @@
 # coding: utf-8
 
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 import umap
-
-#sns.set(style='white', context='notebook', rc={'figure.figsize':(14,10)})
+#https://umap-learn.readthedocs.io/en/latest/basic_usage.html
 
 def embeddable_image(image_path):
     from io import BytesIO
@@ -20,9 +17,9 @@ def embeddable_image(image_path):
     return 'data:image/png;base64,' + base64.b64encode(for_encoding).decode()
 
 
-def umap_bokeh(bn_feat = pd.read_csv('../data/cv_feat.csv', index_col=0), 
-               pred_df = pd.read_csv('../results/predicted_malaria.csv',
-               index_col = 0), image_folder = '../flask/uploads'
+def umap_bokeh(bn_feat, #= pd.read_csv('../results/prod_test_feat.csv', index_col=0), 
+               pred_df, #= pd.read_csv('../results/predicted_malaria.csv', index_col = 0),
+               image_folder = '../flask/uploads'
                ):
 #feat_file = '../results/prod_test_feat.csv'
 #prediction_csv = '../results/predictions_malaria.csv'

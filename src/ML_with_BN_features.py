@@ -202,7 +202,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     
 
     # ## Exploring Different Algorithms For Mutliclass Classfication
-    # ### OneVsRestClassifier with Naive Baise
+    # ### OneVsRestClassifier with Naive Bayes
     
 
     
@@ -254,7 +254,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     
     # In[7]:
     
-    # ### OneVsRestClassifier with Naive Baise    
+    # ### OneVsRestClassifier with Naive Bayes    
 
     classifier = OneVsRestClassifier(GaussianNB())
     nbclf = classifier.fit(X_train, df_y_train['label'].values)
@@ -264,13 +264,13 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     cv_scores = cross_val_score(classifier, X, y) #default 3-fold cross validation
     print('NB cv_scores', cv_scores) 
 #    answer = pd.DataFrame(y_predict_prob, columns = class_names).round(decimals=3) # index= pd.DataFrame(X_test).index.tolist())
-    #print('One vs Rest - Naive Baise\n', answer.head())
+    #print('One vs Rest - Naive Bayes\n', answer.head())
 
-    # Confusion Matrix for Naive Baise
+    # Confusion Matrix for Naive Bayes
     cmNB = confusion_matrix(y_test, y_test_predictions_nbclf, labels=list(class_names))
     plt.subplot(1, 4, 2);
     plot_confusion_matrix(cm1=cmNB, classes=class_names, normalize=True, gradientbar=False,
-                          title='One vs Rest - Naive Baise\nConfusion matrix')
+                          title='One vs Rest - Naive Bayes\nConfusion matrix')
     cv_scores = ["{:.2f}".format(x) for x in cv_scores]
     plt.text(0.01, -0.4, 'NB cv_scores:\n'+ str(cv_scores), ha='left',
              va='bottom', transform= plt.subplot(1,4,2).transAxes)
@@ -359,7 +359,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
 
     # In[10]:
     print('\nLogistic Regression mean accuracy:', round(log_reg_classifier.score(X_test, y_test), 4))
-    print('One vs Rest - Naive Baise mean accuracy:', round(classifier.score(X_test, y_test), 4))
+    print('One vs Rest - Naive Bayes mean accuracy:', round(classifier.score(X_test, y_test), 4))
     print('Random Forest Classifier mean accuracy:', round(RFclf.score(X_test, y_test), 4))
     print('Adaptive Boosting Classifier mean accuracy:', round(AdaBoost.score(X_test, y_test), 4))
     plt.tight_layout()

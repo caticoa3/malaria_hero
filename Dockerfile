@@ -29,6 +29,7 @@ RUN conda install --yes --file requirements_conda.txt
 #Install the libraries using pip install
 #Creating the environemnt with conda env did not work in docker
 RUN pip install -r requirements_pip.txt
+RUN conda clean --yes --tarballs
 
 #Copy the $INSIGHT contents into the container at /insight
 ADD . /insight/
