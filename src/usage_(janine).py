@@ -138,6 +138,7 @@ def uploaded_files():
         if os.path.isfile(path):
             files.append(filename)
     return files
+    # reutnr df_predict
 
 @app.callback(
     #  Output("output-data-upload", "children"),
@@ -157,6 +158,8 @@ def update_output(uploaded_filenames, uploaded_file_contents):
     else:
         print(files)
         #  return [html.Li(filename) for filename in files]
+        # df = ......predict ...
+        # return df.to_dict(orient='records'...)
         return [{'Parasitized_probability': e, 'Predicted_label': 'moo',
                  'fn': f} for e, f in enumerate(files)]
 
