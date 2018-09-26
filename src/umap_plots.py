@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 import umap
+from bokeh.resources import INLINE, CDN
+from bokeh.embed import file_html
 #https://umap-learn.readthedocs.io/en/latest/basic_usage.html
 
 def embeddable_image(image_path):
@@ -101,7 +103,8 @@ def umap_bokeh(bn_feat, #= pd.read_csv('../results/prod_test_feat.csv', index_co
         size=4
     )
     #    show(plot_figure)
-    script, div = components(plot_figure)
+#    script, div = components(plot_figure)
+    html = file_html(plot_figure, INLINE)
 
-    return script, div
+    return html #script, div
 

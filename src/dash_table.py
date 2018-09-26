@@ -17,6 +17,7 @@ from werkzeug.utils import secure_filename
 from web_img_class_API import web_img_class, make_tree
 from umap_plots import umap_bokeh
 from dash.dependencies import Input, Output, State
+import dash_dangerously_set_inner_html
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
@@ -26,6 +27,8 @@ import numpy as np
 import plotly
 import plotly.graph_objs as go
 import datetime
+from bokeh.resources import INLINE, CDN
+from bokeh.embed import file_html
 
 UPLOAD_DIRECTORY = '../flask/uploads'
 if not os.path.exists(UPLOAD_DIRECTORY):
@@ -55,8 +58,10 @@ def download(path):
     return send_from_directory(UPLOAD_DIRECTORY, path, as_attachment=True)
 
 
-DF_GAPMINDER = pd.DataFrame()
-#DF_GAPMINDER = DF_GAPMINDER[0:10]
+columns = ['Parasitized_probability', 'Predicted_label', 'fn']
+pred_df = pd.DataFrame(columns=columns)
+
+#pred_df = pred_df[0:10]
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -101,10 +106,10 @@ app.layout = html.Div([
 #        html.Div(id='output-image-upload'),
         
     dt.DataTable(
-        rows=DF_GAPMINDER.to_dict('records'),
+        rows=pred_df.to_dict('records'),
 
         # optional - sets the order of columns
-#        columns=sorted(DF_GAPMINDER.columns),
+        columns=sorted(pred_df.columns),
 
         row_selectable=True,
         filterable=True,
@@ -116,6 +121,9 @@ app.layout = html.Div([
     dcc.Graph(
         id='graph-gapminder'
     ),
+    html.H1('UMAP'),
+    html.Div(id='bokeh_script',
+             children = 'placeholder for plot')
  ], className="container")
 
 def save_file(name, content):
@@ -139,7 +147,7 @@ def file_download_link(filename):
     return html.A(filename, href=location)
 
 @app.callback(
-    Output("file-list", "children"),
+    Output('datatable-gapminder', 'rows'),
     [Input("upload-data", "filename"), Input("upload-data", "contents")],
 )
 def update_output(uploaded_filenames, uploaded_file_contents):
@@ -157,22 +165,34 @@ def update_output(uploaded_filenames, uploaded_file_contents):
     if len(files) == 0:
         return [html.Li("No files yet!")]
     else:
-        return [html.Li(file_download_link(filename)) for filename in files]
-
-@app.callback(
-    Output('datatable-gapminder', 'rows'),
-    [Input("submit-button", 'n_clicks')],
-)
-def classify(submits):
-    if submits > 0:
-        print(UPLOAD_DIRECTORY)
         classify, pred_df, bn_df = web_img_class(image_dir = UPLOAD_DIRECTORY,\
                                  prediction_csv = 'malaria.csv',\
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
                                  min_samples1 = 0,\
                                  training1= False)
-        return pred_df.to_dict('record')
+        
+        return pred_df.to_dict(orient='records')
+#    [html.Li(file_download_link(filename)) for filename in files]
+
+# -- bokeh plot update
+@app.callback(
+    Output('bokeh_script', 'children'),
+    [Input('datatable-gapminder', "rows")],
+)
+def bokeh_update(rows):
+        bn_df = pd.read_csv('../results/prod_test_feat.csv', index_col=0)
+        pred_df = pd.DataFrame(rows)
+        if pred_df.shape[0] > 3:
+            #http://biobits.org/bokeh-flask.html
+        
+            html = umap_bokeh(bn_feat = bn_df,
+                            pred_df = pred_df,
+                            image_folder =UPLOAD_DIRECTORY)
+        else:
+            html = 'Plotting error: At least 4 cells are need for plots.'
+#            div = ''
+        return html #script
     
 # -- interactive table and graph creation
 @app.callback(
@@ -199,27 +219,18 @@ def update_figure(rows, selected_row_indices):
         rows=2, cols=1, #rows=3
         subplot_titles=('Counts',''),
         shared_xaxes=True)
-#    marker = {'color': ['#0074D9']*len(dff)}
+
     marker_parasite = {'color': ['#3399ff']*len(dff)}
     marker_uninfected = {'color': ['#ff9933']*len(dff)}                                  
+
     for i in (selected_row_indices or []):
         marker_parasite['color'][i] = '#93bf2a'
         marker_uninfected['color'][i] = '#93bf2a'
-#    trace1 = [go.Histogram(x = list((DF_GAPMINDER['Predicted_label']=='Parasitized')*1), opacity=0.75)]
-    mask = DF_GAPMINDER['Predicted_label']=='Parasitized'
-#    https://stackoverflow.com/questions/46750462/subplot-with-plotly-with-multiple-traces
-#    a = DF_GAPMINDER.loc[mask,['Parasitized_probability']].values.round(3)
-#    b = DF_GAPMINDER.loc[~mask,['Parasitized_probability']].values.round(3)
-#    print(a.shape)
-                                  
-#    fig.append_trace(go.Histogram(x = a,
-#                                  opacity = 0.75, name = 'Parasitized'),1,1) 
-#                                # histfunc='count',marker=marker, visible=True
-#    fig.append_trace(go.Histogram(x = b,
-#                                  opacity = 0.75, name = 'Uninfected'),1,1)
 
-    c = list(DF_GAPMINDER.loc[mask,'Parasitized_probability'].values)
-    d = list(DF_GAPMINDER.loc[~mask,'Parasitized_probability'].values)
+    mask = dff['Predicted_label']=='Parasitized'
+
+    c = list(dff.loc[mask,'Parasitized_probability'].values)
+    d = list(dff.loc[~mask,'Parasitized_probability'].values)
     fig.append_trace({'x': c,
                       'type': 'histogram', 
                       'opacity':0.75, 
