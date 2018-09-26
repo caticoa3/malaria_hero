@@ -30,9 +30,10 @@ import datetime
 app = dash.Dash()
 
 app.scripts.config.serve_locally = True
+app.config['suppress_callback_exceptions'] = True
 # app.css.config.serve_locally = True
 
-UPLOAD_DIRECTORY = '../flask/uploads'
+UPLOAD_DIRECTORY = './tmp'
 #if not os.path.exists(UPLOAD_DIRECTORY):
 #    os.makedirs(UPLOAD_DIRECTORY)
 
@@ -61,6 +62,26 @@ ROWS = [
 
 app.layout = html.Div([
     html.H4('Parasite Alert Results'),
+    dcc.Upload(
+        id='upload-data',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Image Files')
+        ]),
+        style={
+            'width': '100%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '10px'
+        },
+        multiple=True),
+
+    #  html.Div(id='output-data-upload'),
+
     dt.DataTable(
         rows=DF_GAPMINDER.to_dict('records'),
 
@@ -78,6 +99,66 @@ app.layout = html.Div([
         id='graph-gapminder'
     ),
  ], className="container")
+
+def parse_contents(contents, filename, date):
+    print(type(contents), filename, date)
+    file = contents
+        #  if allowed_file(file.filename):
+            #  filename = secure_filename(file.filename)
+    file.save(os.path.join(UPLOAD_DIRECTORY, filename))
+    return html.Div([
+        html.H5(filename),
+        #  html.H6(datetime.datetime.fromtimestamp(date)),
+
+        # HTML images accept base64 encoded strings in the same format
+        # that is supplied by the upload
+        html.Img(src=contents),
+        html.Hr(),
+        html.Div('Raw Content'),
+        html.Pre(contents[0:200] + '...', style={
+            'whiteSpace': 'pre-wrap',
+            'wordBreak': 'break-all'
+        })
+    ])
+
+
+def save_file(name, content):
+    """Decode and store a file uploaded with Plotly Dash."""
+    data = content.encode("utf8").split(b";base64,")[1]
+    with open(os.path.join(UPLOAD_DIRECTORY, name), "wb") as fp:
+        fp.write(base64.decodebytes(data))
+
+def uploaded_files():
+    """List the files in the upload directory."""
+    files = []
+    for filename in os.listdir(UPLOAD_DIRECTORY):
+        if filename == '.keep':
+            continue
+        path = os.path.join(UPLOAD_DIRECTORY, filename)
+        if os.path.isfile(path):
+            files.append(filename)
+    return files
+
+@app.callback(
+    #  Output("output-data-upload", "children"),
+    Output("datatable-gapminder", "rows"),
+    [Input("upload-data", "filename"), Input("upload-data", "contents")],
+)
+def update_output(uploaded_filenames, uploaded_file_contents):
+    """Save uploaded files and regenerate the file list."""
+
+    if uploaded_filenames is not None and uploaded_file_contents is not None:
+        for name, data in zip(uploaded_filenames, uploaded_file_contents):
+            save_file(name, data)
+
+    files = uploaded_files()
+    if len(files) == 0:
+        return [html.Li("No files yet!")]
+    else:
+        print(files)
+        #  return [html.Li(filename) for filename in files]
+        return [{'Parasitized_probability': e, 'Predicted_label': 'moo',
+                 'fn': f} for e, f in enumerate(files)]
 
 # -- interactive table and graph creation
 @app.callback(
@@ -106,7 +187,7 @@ def update_figure(rows, selected_row_indices):
         shared_xaxes=True)
 #    marker = {'color': ['#0074D9']*len(dff)}
     marker_parasite = {'color': ['#3399ff']*len(dff)}
-    marker_uninfected = {'color': ['#ff9933']*len(dff)}                                  
+    marker_uninfected = {'color': ['#ff9933']*len(dff)}
     for i in (selected_row_indices or []):
         marker_parasite['color'][i] = '#93bf2a'
         marker_uninfected['color'][i] = '#93bf2a'
@@ -116,9 +197,9 @@ def update_figure(rows, selected_row_indices):
 #    a = DF_GAPMINDER.loc[mask,['Parasitized_probability']].values.round(3)
 #    b = DF_GAPMINDER.loc[~mask,['Parasitized_probability']].values.round(3)
 #    print(a.shape)
-                                  
+
 #    fig.append_trace(go.Histogram(x = a,
-#                                  opacity = 0.75, name = 'Parasitized'),1,1) 
+#                                  opacity = 0.75, name = 'Parasitized'),1,1)
 #                                # histfunc='count',marker=marker, visible=True
 #    fig.append_trace(go.Histogram(x = b,
 #                                  opacity = 0.75, name = 'Uninfected'),1,1)
@@ -126,14 +207,14 @@ def update_figure(rows, selected_row_indices):
     c = list(DF_GAPMINDER.loc[mask,'Parasitized_probability'].values)
     d = list(DF_GAPMINDER.loc[~mask,'Parasitized_probability'].values)
     fig.append_trace({'x': c,
-                      'type': 'histogram', 
-                      'opacity':0.75, 
+                      'type': 'histogram',
+                      'opacity':0.75,
                       'marker': marker_parasite,
                       'name': 'Parasitized'
                       }, 1, 1)
     fig.append_trace({'x': d,
-                      'type': 'histogram', 
-                      'opacity':0.75, 
+                      'type': 'histogram',
+                      'opacity':0.75,
                       'marker': marker_uninfected,
                       'name': 'Uninfected'
                       }, 1, 1)
@@ -150,6 +231,8 @@ def update_figure(rows, selected_row_indices):
 #    plotly.offline.plot(fig)
 #    fig['layout']['yaxis3']['type'] = 'log'
     return fig
+
+
 
 
 app.css.append_css({
