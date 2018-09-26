@@ -37,6 +37,7 @@ app.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #Sets the maximum allowable upload size
 
+
 class UserInput(FlaskForm): #Instatiates the class UserInput inherited from FlaskForm
     training = RadioField('Training', choices=[('False','Predict'),('True','Train')],default='False')
     sample_min = IntegerField(label='Minimum number of samples each label should have when training',default=0)
@@ -93,114 +94,7 @@ def img_classfier():
                                  min_samples1 = form.sample_min.data,\
                                  training1= False)
         
-        # -- Dash app
-        app1 = Dash(server=app)
-        DF_GAPMINDER = pd.read_csv('../results/predicted_malaria.csv', index_col =0)
-        print(DF_GAPMINDER.shape)
-                
-        DF_SIMPLE = pd.DataFrame({
-            'x': ['A', 'B', 'C', 'D', 'E', 'F'],
-            'y': [4, 3, 1, 2, 3, 6],
-            'z': ['a', 'b', 'c', 'a', 'b', 'c']
-        })
-        
-        ROWS = [
-            {'a': 'AA', 'b': 1},
-            {'a': 'AB', 'b': 2},
-            {'a': 'BB', 'b': 3},
-            {'a': 'BC', 'b': 4},
-            {'a': 'CC', 'b': 5},
-            {'a': 'CD', 'b': 6}
-        ]
-        
-        app1.layout = html.Div([
-            html.H4('Parasite Alert Results'),
-            dt.DataTable(
-                rows=DF_GAPMINDER.to_dict('records'),
-        
-                # optional - sets the order of columns
-                columns=sorted(DF_GAPMINDER.columns),
-        
-                row_selectable=True,
-                filterable=True,
-                sortable=True,
-                selected_row_indices=[],
-                id='datatable-gapminder'
-            ),
-            html.Div(id='selected-indexes'),
-            dcc.Graph(
-                id='graph-gapminder'
-            ),
-         ], className="container")
-        
-        # -- interactive table and graph creation
-        @app1.callback(
-            Output('datatable-gapminder', 'selected_row_indices'),
-            [Input('graph-gapminder', 'clickData')],
-            [State('datatable-gapminder', 'selected_row_indices')])
-        def update_selected_row_indices(clickData, selected_row_indices):
-            if clickData:
-                for point in clickData['points']:
-                    if point['pointNumber'] in selected_row_indices:
-                        selected_row_indices.remove(point['pointNumber'])
-                    else:
-                        selected_row_indices.append(point['pointNumber'])
-            return selected_row_indices
-        
-        
-        @app1.callback(
-            Output('graph-gapminder', 'figure'),
-            [Input('datatable-gapminder', 'rows'),
-             Input('datatable-gapminder', 'selected_row_indices')])
-        def update_figure(rows, selected_row_indices):
-            dff = pd.DataFrame(rows)
-            fig = plotly.tools.make_subplots(
-                rows=2, cols=1, #rows=3
-                subplot_titles=('Counts',''),
-                shared_xaxes=True)
-        #    marker = {'color': ['#0074D9']*len(dff)}
-            marker_parasite = {'color': ['#3399ff']*len(dff)}
-            marker_uninfected = {'color': ['#ff9933']*len(dff)}                                  
-            for i in (selected_row_indices or []):
-                marker_parasite['color'][i] = '#93bf2a'
-                marker_uninfected['color'][i] = '#93bf2a'
-
-            mask = DF_GAPMINDER['Predicted_label']=='Parasitized'
-        
-            c = list(DF_GAPMINDER.loc[mask,'Parasitized_probability'].values)
-            d = list(DF_GAPMINDER.loc[~mask,'Parasitized_probability'].values)
-            fig.append_trace({'x': c,
-                              'type': 'histogram', 
-                              'opacity':0.75, 
-                              'marker': marker_parasite,
-                              'name': 'Parasitized'
-                              }, 1, 1)
-            fig.append_trace({'x': d,
-                              'type': 'histogram', 
-                              'opacity':0.75, 
-                              'marker': marker_uninfected,
-                              'name': 'Uninfected'
-                              }, 1, 1)
-            fig.layout.update(go.Layout(barmode = 'overlay'))
-        
-            fig['layout']['showlegend'] = True
-            fig['layout']['height'] = 800
-            fig['layout']['margin'] = {
-                'l': 40,
-                'r': 10,
-                't': 60,
-                'b': 200
-            }
-        #    plotly.offline.plot(fig)
-        #    fig['layout']['yaxis3']['type'] = 'log'
-            return fig
-        
-        
-        app1.css.append_css({
-            'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-        })
-                
-        #end dash ---------------    
+       
         if bn_df.shape[0] > 3:
             #http://biobits.org/bokeh-flask.html
         
@@ -246,5 +140,5 @@ def uploaded_file(filename=''):
 # kill -s KILL <pid> or kill -9 <pid>
 
 if __name__ == '__main__':
-    server.run(debug=True, host='0.0.0.0')    
+    app.run(debug=True, host='0.0.0.0')    
     

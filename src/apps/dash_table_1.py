@@ -36,9 +36,9 @@ if not os.path.exists(UPLOAD_DIRECTORY):
 DF_GAPMINDER = pd.read_csv('../results/predicted_malaria.csv', index_col =0)
 print(DF_GAPMINDER.shape)
 
-def load_file():
-    DF_GAPMINDER = pd.read_csv('../results/predicted_malaria.csv', index_col =0)
-    print(DF_GAPMINDER.shape)
+#def load_file():
+#    DF_GAPMINDER = pd.read_csv('../results/predicted_malaria.csv', index_col =0)
+#    print(DF_GAPMINDER.shape)
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],

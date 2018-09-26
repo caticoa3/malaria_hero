@@ -97,13 +97,14 @@ app.layout = html.Div([
         ),
         html.H2("File List"),
         html.Ul(id="file-list"),
-#    html.Div(id='output-image-upload'),
-    
+        html.Button(id='submit-button', n_clicks=0, children='Submit'),
+#        html.Div(id='output-image-upload'),
+        
     dt.DataTable(
         rows=DF_GAPMINDER.to_dict('records'),
 
         # optional - sets the order of columns
-        columns=sorted(DF_GAPMINDER.columns),
+#        columns=sorted(DF_GAPMINDER.columns),
 
         row_selectable=True,
         filterable=True,
@@ -156,15 +157,22 @@ def update_output(uploaded_filenames, uploaded_file_contents):
     if len(files) == 0:
         return [html.Li("No files yet!")]
     else:
+        return [html.Li(file_download_link(filename)) for filename in files]
+
+@app.callback(
+    Output('datatable-gapminder', 'rows'),
+    [Input("submit-button", 'n_clicks')],
+)
+def classify(submits):
+    if submits > 0:
+        print(UPLOAD_DIRECTORY)
         classify, pred_df, bn_df = web_img_class(image_dir = UPLOAD_DIRECTORY,\
                                  prediction_csv = 'malaria.csv',\
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
                                  min_samples1 = 0,\
                                  training1= False)
-        
-        return [html.Li(file_download_link(filename)) for filename in files]
-
+        return pred_df.to_dict('record')
     
 # -- interactive table and graph creation
 @app.callback(
