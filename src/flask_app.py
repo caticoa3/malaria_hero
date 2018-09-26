@@ -53,8 +53,8 @@ def img_classfier():
         for folder in [UPLOAD_FOLDER, '../results/']:
             clear_folder(folder)
 
-        if form.training.data: #form.training.data value is True or False
-            print('Training with', form.sample_min.data, 'or greater samples for each class')    
+#        if form.training.data: #form.training.data value is True or False
+#            print('Training with', form.sample_min.data, 'or greater samples for each class')    
 
 #    if request.method == 'POST':
         files = request.files.getlist('file', None)
@@ -78,15 +78,17 @@ def img_classfier():
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
                                  min_samples1 = form.sample_min.data,\
-                                 training1= form.training.data)
+                                 training1= False)
         
-        #pass the df dude not the file location:
-#        http://biobits.org/bokeh-flask.html
+        if bn_df.shape[0] > 3:
+            #http://biobits.org/bokeh-flask.html
         
-        script, div = umap_bokeh(bn_feat = bn_df,
-                        pred_df = pred_df,
-                        image_folder =UPLOAD_FOLDER)
-        
+            script, div = umap_bokeh(bn_feat = bn_df,
+                            pred_df = pred_df,
+                            image_folder =UPLOAD_FOLDER)
+        else:
+            script= 'Plotting error: At least 4 cells are need for plots.'
+            div = ''
         return render_template('classify_out.html',\
                                file_loc = url_for('dirtree'),\
                                features_file = '../results/prod_test_feat.csv',\

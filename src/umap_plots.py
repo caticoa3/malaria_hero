@@ -34,16 +34,20 @@ def umap_bokeh(bn_feat, #= pd.read_csv('../results/prod_test_feat.csv', index_co
     '''This function is for plotting a bokeh plot of UMAP dimensionality 
     reduction plot, colored based on labels, with thumnail overlays for
     webapp results.'''
+    if bn_feat.shape[0] < 3:
+        print('Please select more than 3 cells to classify')
+        return
+
 #    bn_feat = pd.read_csv(feat_file, index_col = 0)
     #bn_feat = bn_feat.sample(frac=0.01)
-    
     reducer = umap.UMAP(random_state=42)
     
     ## -- UMAP (might want to make into another function)
     #Train the dimonsionality reduction
     features = bn_feat.drop(columns=['label','fn'])
-    reducer.fit(features)
     
+    reducer.fit(features)
+
     embedding = reducer.transform(features)
     # Verify that the result of calling transform is
     # idenitical to accessing the embedding_ attribute

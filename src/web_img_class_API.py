@@ -24,7 +24,7 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     of webpage using Tensor flow and sklearn libraries.
     
     Arguments    
-    image_dif:      A directory containing .png image of single cells. One cell
+    image_dir:      A directory containing .png image of single cells. One cell
                     per image.
     prediction_csv: File name for the csv that in which predictions will be 
                     saved with file names.
