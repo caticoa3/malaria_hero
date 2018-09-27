@@ -8,6 +8,7 @@ Created on Tue Sep 18 2018
 import os
 import pickle
 import pandas as pd
+import re
 from features_to_DF import gen_bn_features
 import sys
 
@@ -84,15 +85,42 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     #Load csv file into pandas dataframe
     #add predicted labels and save a new csv
     files_processed = bn_feat.loc[:,['fn']]
+    
+    #file neame processing: C33P1thinF_IMG_20150619_114756a_cell_181.png, C1_thinF_IMG_20150604_104722_cell_81.png, C6NThinF_IMG_20150609_121955_cell_51.png
+    def split_it(row):
+        c = re.findall('C(\d{1,3})',row['fn'])
+        patient = re.findall('P(\d{1,3})',row['fn'])
+        cell_no = re.findall('cell_(\d{1,3})',row['fn'])
+        for i, x in enumerate([c, patient, cell_no]):
+            if x:
+                if i==0:
+                    row['Slide'] = c[0] 
+                if i==1:
+                    row['Patient'] = patient[0]
+                if i==2:
+                    row['Cell'] = cell_no[0]
+        return row
+    
+    files_processed = files_processed.apply(split_it, axis=1)
+                
     files_processed = files_processed.assign(Predicted_label= predictions)
     files_processed = files_processed.assign(Parasitized_probability = positive_prob)
+    files_processed = files_processed.round({'Parasitized_probability': 4})
     files_processed.to_csv('../results/predicted_{}'.format(prediction_csv))
     
-#    print(files_processed)
-#    print(files_processed.shape)
-#    print(files_processed.columns)
-    #print(files_processed.to_html())
-    return files_processed.to_html(index=False), files_processed, bn_feat
+    #Groupping by Patient,and slides to give a better product application 
+    #for screening slides.
+    def percent_n_sum(row):
+        row['Parasite Rate'] = 100 * row['Cell']/float(row['Cell'].sum())
+        row['Total Cells Examined'] = row['Cell'].sum()
+        return row
+    cell_counts = files_processed.groupby(by=['Patient','Predicted_label','Slide']).agg({'Cell':'count'})
+    totals = cell_counts.groupby(level=0).apply(percent_n_sum).reset_index()
+    parasite_mask = totals['Predicted_label'] == 'Parasitized'
+    actionable_table = totals.loc[parasite_mask,:].drop(columns=['Predicted_label','Cell'])
+    actionable_table.to_csv('../results/actionable_table.csv')
+    
+    return files_processed.to_html(index=False), actionable_table, files_processed, bn_feat
     #'Modified uploaded file with predictions:\n{0}'.format(urls)
     #Import data from csv into a pandas dataframe
     
