@@ -9,13 +9,13 @@ services:
        PYTHONUNBUFFERED: 'true'   
     ports:
       - "5000:5000"
-    command: gunicorn -w 3 -t 10 --timeout 180 --worker-class eventlet -b :5000 flask_app:app
+    command: gunicorn -w 3 -t 10 --timeout 180 --worker-class eventlet -b :5000 dash_table:server
 
   nginx:
     container_name: nginx
     restart: always
     build: ./nginx
     ports:
-      - "80:8080"
+      - "80:80"
     depends_on:
       - api

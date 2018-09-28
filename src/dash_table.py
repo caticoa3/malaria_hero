@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 from web_img_class_API import web_img_class, make_tree
 from umap_plots import umap_bokeh
 from dash.dependencies import Input, Output, State
-import dash_dangerously_set_inner_html
+#import dash_dangerously_set_inner_html
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
@@ -263,4 +263,4 @@ app.css.append_css({
 })
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8888)
+    app.run_server(debug=True, port=5000)

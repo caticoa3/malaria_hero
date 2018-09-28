@@ -38,4 +38,4 @@ ENV NAME insight
 
 WORKDIR /insight/src/
 
-#CMD python flask_app.pyb
+#CMD python dash_table.py

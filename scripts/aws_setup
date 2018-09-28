@@ -10,7 +10,9 @@ sudo usermod -a -G docker ec2-user
 pip install docker-compose
 
 #follow with 
-#docker-compose build
-#docker-compose up
+docker-compose build
 
+cd src/
+docker-compose up
 
+#access port 5000
