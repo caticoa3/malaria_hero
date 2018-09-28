@@ -23,6 +23,7 @@ import pandas as pd
 import numpy as np
 import time
 
+from scipy import interp
 from itertools import cycle
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
@@ -52,7 +53,7 @@ from pair_scatter_plots import plot_pca, seaborn_pairwise_plot, caa_plot_pairs
 
 def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100, 
                     plotting=False):
-    plt.close()
+    plt.close('all')
     if n_comp < 50:
         n_comp = 50
     # Importing the bottleneck features for each image
@@ -124,7 +125,6 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.suptitle('Explained Variance of Principle Components')
 #    plt.show(block=False)
     plt.savefig('../plots/pca_var_vs_ncomp.png')
-
     # #### After about 70 components there is very little variance gain  ####
     # Applying Principle Component Decomposition
 
@@ -137,14 +137,13 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     X_train = pca.fit_transform(X_train)
     X_test = pca.transform(X_test)
     explained_variance1 = pca.explained_variance_ratio_
-    plt.figure(10)
+    plt.figure(1)
     plt.plot(explained_variance1)
     plt.xlabel('n_components')
     plt.ylabel('variance')
     plt.suptitle('Explained Variance of Principle Components')
-#    plt.show(block=False)
+    plt.show(block=False)
     plt.savefig('../plots/pca_var_vs_{}_ncomp.png'.format(n_comp))
-
     # Save feature reduction PCA
     save_PCA = '../models/trained_PCA.sav'
     pickle.dump(pca, open(save_PCA, 'wb'))
@@ -175,38 +174,11 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     print('n_comp_pca', n_comp_pca)
     print('feature_names', feature_names)
     print('df_pca_train columns', list(df_pca_train.columns))
-    #plot coloring phenotype
-#    seaborn_pairwise_plot(df_pca_train, color_index='label',
-#                          feature_names=feature_names, n_comp=n_comp_pca)
-    #plot coloring experimental condition
-#    seaborn_pairwise_plot(df_pca_train, color_index='group_idx',
-#                          feature_names=feature_names, n_comp=n_comp_pca)
 
-#    print('dates', dates)
-#    for date in dates:
-#        try:
-#            print(date)
-#            df = df_pca_train.loc[df_pca_train['Date']==date,:]
-#            seaborn_pairwise_plot(df,color_index='group_idx', 
-#                                  feature_names=feature_names,
-#                                  n_comp=date)
-##            time.sleep(10)
-##            plt.show(block=True)
-#        except ValueError:
-#            print('ValueErorr for', date, 'continuing with next date.')
-#            continue
-
-    #Isomap? tsne?
-    
-    #tsne
-    
-
-    # ## Exploring Different Algorithms For Mutliclass Classfication
-    # ### OneVsRestClassifier with Naive Bayes
-    
-
+    plt.close('all')
     
     # Set up plot to compare confusion matrices
+    
     fig, axs = plt.subplots(1, 4, sharey=True, figsize=(15, 8.5))
     
     # ## Exploring Different Algorithms For Mutliclass Classfication
@@ -228,7 +200,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     y_test_predictions_log_r = log_r.predict(X_test)
     y_predict_prob_log_r = log_r.predict_proba(X_test)
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
-    cv_scores_lr = cross_val_score(log_r, X, y)
+    cv_scores_lr = cross_val_score(log_r, X_train, y_train)
     print('Logistic regression cv_scores', cv_scores_lr)
     
     save_LR = '../models/trained_log_reg.sav'
@@ -261,7 +233,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     y_test_predictions_nbclf = nbclf.predict(X_test)
     y_predict_prob = nbclf.predict_proba(X_test)
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
-    cv_scores = cross_val_score(classifier, X, y) #default 3-fold cross validation
+    cv_scores = cross_val_score(classifier, X_train, y_train) #default 3-fold cross validation
     print('NB cv_scores', cv_scores) 
 #    answer = pd.DataFrame(y_predict_prob, columns = class_names).round(decimals=3) # index= pd.DataFrame(X_test).index.tolist())
     #print('One vs Rest - Naive Bayes\n', answer.head())
@@ -298,7 +270,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
 #    y_score_RF = RFclf.predict_proba(X_test)
     y_score_answer_RF = RFclf.predict_proba(X_test)
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
-    cv_scores_RF = cross_val_score(RFclf, X, y) #default 3-fold cross validation
+    cv_scores_RF = cross_val_score(RFclf, X_train, y_train) #default 3-fold cross validation
     print('Random Forest cv_scores', cv_scores_RF)
 #    answer_RF = pd.DataFrame(y_score_answer_RF)
     save_RF = '../models/trained_RF.sav'
@@ -332,7 +304,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
 #    y_predAB_binarized = label_binarize(y_predAB,
 #                                     classes=['single_product','market_place'])
     #Perform 3-fold cross validation and return the mean accuracy on each fold
-    cv_scores_AB = cross_val_score(AdaBoost, X, y) #default 3-fold cross validation
+    cv_scores_AB = cross_val_score(AdaBoost, X_train, y_train) #default 3-fold cross validation
     print('Adaptive Boosting cv_scores', cv_scores_AB)
     save_AdaBoost = '../models/trained_AdaBoost.sav'
     pickle.dump(AdaBoost, open(save_AdaBoost, 'wb'))
@@ -354,7 +326,6 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
             d = p_r_fscore_AB[:3]), ha='left', va='bottom', 
             transform= plt.subplot(1,4,4).transAxes)
         
-
     # #### Comparing mean accuracy and confusion matrices of difference classification algorithrms
 
     # In[10]:
@@ -365,8 +336,38 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.tight_layout()
     fig.tight_layout()
     plt.savefig('../plots/confusion_matrix_result_1.png')
-    print('If launched from command line use ctrl+c to close all plots and finish')
+    plt.show(block=False)
+    
+    ### -- ROC and AUC
+    # Compute ROC curve and area the curve
+    plt.figure(12)
+    print('y_test before binirization', y_test[0:4])
+    y_test = label_binarize(y_test, classes=['Uninfected','Parasitized'])
+    print('y_test after binirization', y_test[0:4])
+
+    print(y_predict_prob_log_r[1:4, 0])
+    fpr, tpr, thresholds = roc_curve(y_test, y_predict_prob_log_r[:, 0])
+    roc_df = pd.DataFrame({'fpr':fpr,'tpr':tpr, 'thresholds':thresholds })
+    roc_df.to_csv('../data/roc_data.csv')
+#    tprs = [interp(mean_fpr, fpr, tpr)]
+#    tprs[-1][0] = 0.0
+    roc_auc = auc(fpr, tpr)
+    plt.title('Receiver Operating Characteristic', fontsize=18)
+    plt.plot(fpr, tpr, lw=2, color='#3399ff',
+             label='AUC = {0:.2f}'.format(roc_auc))
+
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='gray',
+             label='Chance', alpha=.8)
+
+    plt.ylabel('True Positive Rate',fontsize=14)
+    plt.xlabel('False Positive Rate',fontsize=14)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.legend(loc="lower right")
+    plt.tight_layout()
+    plt.savefig('../plots/ROC_CNN_log_reg.png')
     plt.show()
+    plt.close('all')
+    print('If launched from command line use ctrl+z to close all plots and finish')
 
 
 if __name__ == '__main__':
@@ -374,4 +375,4 @@ if __name__ == '__main__':
     ML_with_BN_feat(bn_feat_file=sys.argv[1], n_comp=int(sys.argv[2]), 
                     plotting=sys.argv[3])
 # Command line use:
-# python ML_with_BN_features.py ../data/filtered_bn_feat.csv 100
+# python ML_with_BN_features.py ../data/bn_feat.csv 100 False
