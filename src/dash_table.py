@@ -35,6 +35,9 @@ if not os.path.exists(UPLOAD_DIRECTORY):
     os.makedirs(UPLOAD_DIRECTORY)
 
 server = Flask(__name__)
+server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #Sets the maximum allowable upload size
+server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
+server.config['UPLOAD_FOLDER'] = UPLOAD_DIRECTORY
 
 app = dash.Dash(server=server)
 
