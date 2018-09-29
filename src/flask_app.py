@@ -73,7 +73,7 @@ def img_classfier():
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        classify, pred_df, bn_df = web_img_class(image_dir = UPLOAD_FOLDER,\
+        classify, grouped_df, pred_df, bn_df = web_img_class(image_dir = UPLOAD_FOLDER,\
                                  prediction_csv = 'malaria.csv',\
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
