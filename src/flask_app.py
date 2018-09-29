@@ -17,8 +17,9 @@ from web_img_class_API import web_img_class, make_tree
 from umap_plots import umap_bokeh
 
 UPLOAD_FOLDER = '../flask/uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+for setup_dir in [UPLOAD_FOLDER, '../results/']:
+    if not os.path.exists(setup_dir):
+        os.makedirs(setup_dir)
 ALLOWED_EXTENSIONS = set(['csv','txt','png'])
 
 app =  Flask(__name__)
