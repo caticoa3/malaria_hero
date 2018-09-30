@@ -30,14 +30,15 @@ import datetime
 from bokeh.resources import INLINE, CDN
 from bokeh.embed import file_html
 
-UPLOAD_DIRECTORY = '../flask/uploads'
-if not os.path.exists(UPLOAD_DIRECTORY):
-    os.makedirs(UPLOAD_DIRECTORY)
-
+UPLOAD_FOLDER = '../flask/uploads'
+for setup_dir in [UPLOAD_FOLDER, '../results/']:
+    if not os.path.exists(setup_dir):
+        os.makedirs(setup_dir)
+        
 server = Flask(__name__)
 server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #Sets the maximum allowable upload size
 server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
-server.config['UPLOAD_FOLDER'] = UPLOAD_DIRECTORY
+server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app = dash.Dash(server=server)
 
@@ -58,10 +59,11 @@ def clear_folder(folder):
 @server.route("/download/<path:path>")
 def download(path):
     """Serve a file from the upload directory."""
-    return send_from_directory(UPLOAD_DIRECTORY, path, as_attachment=True)
+    return send_from_directory(UPLOAD_FOLDER, path, as_attachment=True)
 
-columns = ['Patient', 'Slide', 'Parasite Rate', 'Total Cells Examined']
-pred_df = pd.DataFrame(columns=columns)
+#columns = ['Patient', 'Slide', 'Parasite Rate', 'Total Cells Examined']
+#pred_df = pd.DataFrame(columns=columns)\
+pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
 
 #pred_df = pred_df[0:10]
 
@@ -81,7 +83,7 @@ ROWS = [
 ]
 
 app.layout = html.Div([
-    html.H4('Parasite Alert Results'),
+    html.H4('Malaria Hero'),
 #    https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
         id='upload-data',
@@ -131,14 +133,14 @@ app.layout = html.Div([
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
     data = content.encode("utf8").split(b";base64,")[1]
-    with open(os.path.join(UPLOAD_DIRECTORY, name), "wb") as fp:
+    with open(os.path.join(UPLOAD_FOLDER, name), "wb") as fp:
         fp.write(base64.decodebytes(data))
         
 def uploaded_files():
     """List the files in the upload directory."""
     files = []
-    for filename in os.listdir(UPLOAD_DIRECTORY):
-        path = os.path.join(UPLOAD_DIRECTORY, filename)
+    for filename in os.listdir(UPLOAD_FOLDER):
+        path = os.path.join(UPLOAD_FOLDER, filename)
         if os.path.isfile(path):
             files.append(filename)
     return files
@@ -154,7 +156,7 @@ def file_download_link(filename):
 )
 def update_output(uploaded_filenames, uploaded_file_contents):
     '''Clear folders before saving new content'''
-    for folder in [UPLOAD_DIRECTORY, '../results/']:
+    for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
 #    pd.DataFrame().to_csv('../results/prod_test.csv')
     
@@ -166,9 +168,10 @@ def update_output(uploaded_filenames, uploaded_file_contents):
 
     files = uploaded_files()
     if len(files) == 0:
-        return [html.Li("No files yet!")]
+        return pred_df.to_dict(orient='records')
+#        return [html.Li("No files yet!")]
     else:
-        classify, action_df, pred_df, bn_df = web_img_class(image_dir = UPLOAD_DIRECTORY,\
+        classify, action_df, pred_df, bn_df = web_img_class(image_dir = UPLOAD_FOLDER,\
                                  prediction_csv = 'malaria.csv',\
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
@@ -191,7 +194,7 @@ def update_output(uploaded_filenames, uploaded_file_contents):
 #        
 #            html = umap_bokeh(bn_feat = bn_df,
 #                            pred_df = pred_df,
-#                            image_folder =UPLOAD_DIRECTORY)
+#                            image_folder =UPLOAD_FOLDER)
 #        else:
 #            html = 'Plotting error: At least 4 cells are need for plots.'
 ##            div = ''
