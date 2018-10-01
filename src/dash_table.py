@@ -61,11 +61,9 @@ def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory(UPLOAD_FOLDER, path, as_attachment=True)
 
-#columns = ['Patient', 'Slide', 'Parasite Rate', 'Total Cells Examined']
-#pred_df = pd.DataFrame(columns=columns)\
+#Load example results
 pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
 
-#pred_df = pred_df[0:10]
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -154,11 +152,11 @@ def file_download_link(filename):
     Output('datatable-gapminder', 'rows'),
     [Input("upload-data", "filename"), Input("upload-data", "contents")],
 )
-def update_output(uploaded_filenames, uploaded_file_contents):
+def update_output(uploaded_filenames, uploaded_file_contents, pred_df=pred_df):
     '''Clear folders before saving new content'''
     for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
-#    pd.DataFrame().to_csv('../results/prod_test.csv')
+#    pd.DataFrame().to_csv('../results/prod_test.csv') 
     
     """Save uploaded files and regenerate the file list."""
 
