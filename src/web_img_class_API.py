@@ -111,14 +111,21 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     #Groupping by Patient,and slides to give a better product application 
     #for screening slides.
     def percent_n_sum(row):
-        row['Parasite Rate'] = 100 * row['Cell']/float(row['Cell'].sum())
+        row[u'% Infected Cells'] = 100 * row['Cell']/float(row['Cell'].sum())
         row['Total Cells Examined'] = row['Cell'].sum()
         return row
     cell_counts = files_processed.groupby(by=['Patient','Predicted_label','Slide']).agg({'Cell':'count'})
     totals = cell_counts.groupby(level=0).apply(percent_n_sum).reset_index()
     parasite_mask = totals['Predicted_label'] == 'Parasitized'
-    actionable_table = totals.loc[parasite_mask,:].drop(columns=['Predicted_label','Cell'])
+    actionable_table = totals.loc[parasite_mask,:].drop(columns=['Slide','Predicted_label','Cell'])
+    # Format total cells examined to integer
+    actionable_table['Total Cells Examined'] = actionable_table['Total Cells Examined'].astype(int)
+    # Sort based on the % of Infected Cell
+    actionable_table.sort_values(by = '% Infected Cells', ascending=False, inplace=True)
+    # Format to two decimal places
+    actionable_table['% Infected Cells'] = actionable_table['% Infected Cells'].map('{:,.2f}'.format).astype(float)
     actionable_table.to_csv('../results/actionable_table.csv')
+    print(actionable_table.head())
     
     return files_processed.to_html(index=False), actionable_table, files_processed, bn_feat
     #'Modified uploaded file with predictions:\n{0}'.format(urls)
