@@ -58,7 +58,7 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
         n_comp = 50
     # Importing the bottleneck features for each image
     feat_df = pd.read_csv(bn_feat_file, index_col=0, dtype='unicode')
-#    feat_df = feat_df.sample(frac=0.5)
+#    feat_df = feat_df.sample(frac=0.05)
     print('Data frame shape:', feat_df.shape)
 #    feat_df = feat_df.iloc[0:300,:]
     mask = feat_df.loc[:, 'label'].isin(['Parasitized', 'Uninfected'])
@@ -178,12 +178,27 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.close('all')
     
     # Set up plot to compare confusion matrices
+    params = {'axes.titlesize': 'x-large',
+#            'legend.fontsize': 'large',
+#          'figure.figsize': (15, 5),
+         'axes.labelsize': 'large',
+         'axes.titlesize':'large',
+         'xtick.labelsize':'medium',
+         'ytick.labelsize':'medium'}
+    plt.rcParams.update(params)
     
     fig, axs = plt.subplots(1, 4, sharey=True, figsize=(15, 8.5))
+    font = {'linespacing':1.5, #'family': 'serif', 'color':  'darkred', 'weight': 'normal',
+            'size': 14}
+    
     
     # ## Exploring Different Algorithms For Mutliclass Classfication
     
     
+    
+    #Metric in this case is F2 
+    from sklearn.metrics import fbeta_score, make_scorer
+    ftwo_scorer = make_scorer(fbeta_score, beta=2)
     # In[7.5]:
     # Let's scale the features and plug into logisitc regression classifier
     from sklearn.preprocessing import StandardScaler
@@ -199,8 +214,14 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     
     y_test_predictions_log_r = log_r.predict(X_test)
     y_predict_prob_log_r = log_r.predict_proba(X_test)
+    # save results into a DF
+    results = pd.DataFrame()
+    results['y_test'] = y_test[:, 0]
+    results['log_r_pred'] = list(y_test_predictions_log_r)
+    results['log_r_prob'] = y_predict_prob_log_r[:, 0]
+    
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
-    cv_scores_lr = cross_val_score(log_r, X_train, y_train)
+    cv_scores_lr = cross_val_score(estimator=log_r, X= X_train, y= y_train) #, scoring = ftwo_scorer)
     print('Logistic regression cv_scores', cv_scores_lr)
     
     save_LR = '../models/trained_log_reg.sav'
@@ -210,19 +231,18 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     cmNB = confusion_matrix(y_test, y_test_predictions_log_r, labels=list(class_names))
     plt.subplot(1, 4, 1);
     plot_confusion_matrix(cm1=cmNB, classes=class_names, normalize=True, gradientbar=False,
-                          title='Logistic Regression\nConfusion matrix')
+                          title='Logistic Regression\n')
     cv_scores_lr = ["{:.2f}".format(x) for x in cv_scores_lr]
-    
-    plt.text(0.01, -0.4, 'Logisitc regression cv_scores:\n'+ str(cv_scores_lr), ha='left',
-             va='bottom', transform= plt.subplot(1,4,1).transAxes)
-    
+        
     p_r_fscore_lr = precision_recall_fscore_support(y_test, y_test_predictions_log_r, 
-                                    beta=1.0, labels=['Parasitized'], pos_label='Parasitized',
+                                    beta=2.0, labels=['Parasitized'], pos_label='Parasitized',
                                     average='binary')
 
     print(p_r_fscore_lr[:3])
-    plt.text(0.01, -0.6, '\nPrecision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score:{d[2]:.2f} \n'.format(d = p_r_fscore_lr[:3]), ha='left',
-             va='bottom', transform= plt.subplot(1,4,1).transAxes)
+    plt.text(0.01, -1,'\nCV Scores:\n'+ str(cv_scores_lr) + '\n' + 
+             'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score: {d[2]:.2f} \n'.format(
+            d = p_r_fscore_lr[:3]), ha='left', va='bottom', fontdict = font,
+            transform= plt.subplot(1,4,1).transAxes)
     
     # In[7]:
     
@@ -232,6 +252,10 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     nbclf = classifier.fit(X_train, df_y_train['label'].values)
     y_test_predictions_nbclf = nbclf.predict(X_test)
     y_predict_prob = nbclf.predict_proba(X_test)
+    # save results into a DF
+    results['NB_pred'] = list(y_test_predictions_nbclf)
+    results['NB_r_prob'] = y_predict_prob[:, 0]
+    
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
     cv_scores = cross_val_score(classifier, X_train, y_train) #default 3-fold cross validation
     print('NB cv_scores', cv_scores) 
@@ -242,17 +266,18 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     cmNB = confusion_matrix(y_test, y_test_predictions_nbclf, labels=list(class_names))
     plt.subplot(1, 4, 2);
     plot_confusion_matrix(cm1=cmNB, classes=class_names, normalize=True, gradientbar=False,
-                          title='One vs Rest - Naive Bayes\nConfusion matrix')
+                          title='One vs Rest - Naive Bayes\n')
     cv_scores = ["{:.2f}".format(x) for x in cv_scores]
-    plt.text(0.01, -0.4, 'NB cv_scores:\n'+ str(cv_scores), ha='left',
-             va='bottom', transform= plt.subplot(1,4,2).transAxes)
     
     p_r_fscore_NB = precision_recall_fscore_support(y_test, y_test_predictions_nbclf, 
-                                    beta=1.0, labels=['Parasitized'], pos_label='Parasitized',
+                                    beta=2.0, labels=['Parasitized'], pos_label='Parasitized',
                                     average='binary')
     print(p_r_fscore_NB[:3])
-    plt.text(0.01, -0.6, 'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score:{d[2]:.2f} \n'.format(d = p_r_fscore_NB[:3]), ha='left',
-             va='bottom', transform= plt.subplot(1,4,2).transAxes)
+    plt.text(0.01, -1,'\nCV Scores:\n'+ str(cv_scores) + '\n' + 
+             'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score: {d[2]:.2f} \n'.format(
+            d = p_r_fscore_NB[:3]), ha='left', va='bottom', fontdict = font,
+            transform= plt.subplot(1,4,2).transAxes)
+    
 
     # ### Random Forest Classification
 
@@ -269,6 +294,11 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     y_test_predictions_RF = RFclf.predict(X_test)
 #    y_score_RF = RFclf.predict_proba(X_test)
     y_score_answer_RF = RFclf.predict_proba(X_test)
+
+    # save results into a DF
+    results['RF'] = list(y_test_predictions_RF)
+    results['RF_prob'] = y_score_answer_RF[:, 0]
+    
     #Perform 3-fold cross validation and return the mean accuracy on each fold    
     cv_scores_RF = cross_val_score(RFclf, X_train, y_train) #default 3-fold cross validation
     print('Random Forest cv_scores', cv_scores_RF)
@@ -281,17 +311,17 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     cmRF = confusion_matrix(y_test, y_test_predictions_RF, labels=list(class_names))
     plt.subplot(1, 4, 3)
     plot_confusion_matrix(cm1=cmRF, classes=class_names, normalize=True, gradientbar=False,
-                          title='Random Forests\nestimators: {0}, max_features: {1}\nConfusion matrix'.format(n, f))
+                          title='Random Forests\nestimators: {0}\n max_features: {1}\n'.format(n, f))
     cv_scores_RF = ["{:.2f}".format(x) for x in cv_scores_RF]
-    plt.text(0.01, -0.4, 'Random Forest cv_scores:\n'+ str(cv_scores_RF), ha='left',
-             va='bottom', transform=plt.subplot(1, 4, 3).transAxes)
     
     p_r_fscore_RF = precision_recall_fscore_support(y_test, y_test_predictions_RF, 
-                                    beta=1.0, labels=['Parasitized'], pos_label='Parasitized',
+                                    beta=2.0, labels=['Parasitized'], pos_label='Parasitized',
                                     average='binary')
     print(p_r_fscore_RF[:3])
-    plt.text(0.01, -0.6, 'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score:{d[2]:.2f} \n'.format(d = p_r_fscore_RF[:3]), ha='left',
-             va='bottom', transform= plt.subplot(1,4,3).transAxes)
+    plt.text(0.01, -1,'\nCV Scores:\n'+ str(cv_scores_RF) + '\n' + 
+             'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score: {d[2]:.2f} \n'.format(
+            d = p_r_fscore_RF[:3]), ha='left', va='bottom', fontdict = font,
+            transform= plt.subplot(1,4,3).transAxes)
     
     # ### Adaptive Boosting Classifier
     # http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html
@@ -301,8 +331,14 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     AdaBoost = AdaBoostClassifier()
     AdaBoost.fit(X_train, y_train)
     y_predAB = AdaBoost.predict(X_test)
+    y_predAB_prob = AdaBoost.predict_proba(X_test)
 #    y_predAB_binarized = label_binarize(y_predAB,
 #                                     classes=['single_product','market_place'])
+    # save results into a DF
+    results['AB_pred'] = list(y_predAB)
+    results['AB_prob'] = y_predAB_prob[:, 0]
+    
+    results.to_csv('../data/y_test_predictions')
     #Perform 3-fold cross validation and return the mean accuracy on each fold
     cv_scores_AB = cross_val_score(AdaBoost, X_train, y_train) #default 3-fold cross validation
     print('Adaptive Boosting cv_scores', cv_scores_AB)
@@ -312,18 +348,17 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     plt.subplot(1, 4, 4)
     cmAdaBoost = confusion_matrix(y_test, y_predAB, labels=list(class_names))
     plot_confusion_matrix(cm1=cmAdaBoost, normalize=True, classes=class_names,
-                          title='AdaBoost\nConfusion matrix', gradientbar=False)
+                          title='AdaBoost\n', gradientbar=False)
     cv_scores_AB = ["{:.2f}".format(x) for x in cv_scores_AB]
-    plt.text(0.01, -0.4, 'Adaptive Boosting cv_scores:\n'+ str(cv_scores_AB), ha='left',
-             va='bottom', transform=plt.subplot(1, 4, 4).transAxes)
-    
     
     p_r_fscore_AB = precision_recall_fscore_support(y_test, y_predAB, 
-                                    beta=1.0, labels=['Parasitized'], pos_label='Parasitized',
+                                    beta=2.0, labels=['Parasitized'], pos_label='Parasitized',
                                     average='binary')
     print(p_r_fscore_AB[:3])
-    plt.text(0.01, -0.6, 'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score:{d[2]:.2f} \n'.format(
-            d = p_r_fscore_AB[:3]), ha='left', va='bottom', 
+    
+    plt.text(0.01, -1,'\nCV Scores:\n'+ str(cv_scores_AB) + '\n' + 
+             'Precision: {d[0]:.2f}\nRecall: {d[1]:.2f} \nF2 score: {d[2]:.2f} \n'.format(
+            d = p_r_fscore_AB[:3]), ha='left', va='bottom', fontdict = font,
             transform= plt.subplot(1,4,4).transAxes)
         
     # #### Comparing mean accuracy and confusion matrices of difference classification algorithrms
@@ -341,11 +376,11 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     ### -- ROC and AUC
     # Compute ROC curve and area the curve
     plt.figure(12)
-    print('y_test before binirization', y_test[0:4])
+#    print('y_test before binirization', y_test[0:4])
     y_test = label_binarize(y_test, classes=['Uninfected','Parasitized'])
-    print('y_test after binirization', y_test[0:4])
+#    print('y_test after binirization', y_test[0:4])
 
-    print(y_predict_prob_log_r[1:4, 0])
+#    print(y_predict_prob_log_r[1:4, 0])
     fpr, tpr, thresholds = roc_curve(y_test, y_predict_prob_log_r[:, 0])
     roc_df = pd.DataFrame({'fpr':fpr,'tpr':tpr, 'thresholds':thresholds })
     roc_df.to_csv('../data/roc_data.csv')

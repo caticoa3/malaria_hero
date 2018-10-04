@@ -12,7 +12,7 @@ import itertools
 
 def plot_confusion_matrix(cm1, classes, normalize=False, 
                           title='Confusion matrix', cmap=plt.cm.Blues, 
-                          gradientbar=False):
+                          gradientbar=False, font={'size':12}):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -26,7 +26,7 @@ def plot_confusion_matrix(cm1, classes, normalize=False,
 
 #    print(cm1)
     plt.imshow(cm1, interpolation='nearest', cmap=cmap)
-    plt.title(title)
+    plt.title(title, )
     if gradientbar:
         plt.colorbar()
     tick_marks = np.arange(len(classes))
@@ -38,7 +38,7 @@ def plot_confusion_matrix(cm1, classes, normalize=False,
     for i, j in itertools.product(range(cm1.shape[0]), range(cm1.shape[1])):
         plt.text(j, i, format(cm1[i, j], fmt),
                  horizontalalignment="center",
-                 color="white" if cm1[i, j] > thresh else "black")
+                 color="white" if cm1[i, j] > thresh else "black", fontdict = font)
 
 #    plt.tight_layout()
     plt.ylabel('True label')
