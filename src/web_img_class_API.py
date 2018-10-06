@@ -7,7 +7,6 @@ Created on Tue Sep 18 2018
 """
 import os
 import pickle
-import pandas as pd
 import re
 from features_to_DF import gen_bn_features
 import sys

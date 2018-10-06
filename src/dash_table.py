@@ -10,23 +10,23 @@ import base64
 import os
 from urllib.parse import quote as urlquote
 import dash
-from flask import Flask, request, redirect, url_for, render_template, flash, send_from_directory
-from flask_wtf import FlaskForm
-from wtforms import IntegerField, RadioField
-from werkzeug.utils import secure_filename
-from web_img_class_API import web_img_class, make_tree
-from umap_plots import umap_bokeh
+from flask import Flask, render_template, send_from_directory #, request, redirect, url_for, flash
+#from flask_wtf import FlaskForm
+#from wtforms import IntegerField, RadioField
+#from werkzeug.utils import secure_filename
+from web_img_class_API import web_img_class
+#from umap_plots import umap_bokeh
 from dash.dependencies import Input, Output, State
 #import dash_dangerously_set_inner_html
 import dash_core_components as dcc 
 import dash_html_components as html
 import dash_table_experiments as dt
-import json
+#import json
 import pandas as pd
-import numpy as np
+#import numpy as np
 import plotly
 import plotly.graph_objs as go
-import datetime
+#import datetime
 from bokeh.resources import INLINE, CDN
 from bokeh.embed import file_html
 
@@ -97,14 +97,18 @@ app.layout = html.Div([
             'borderStyle': 'dashed',
             'borderRadius': '5px',
             'textAlign': 'center',
-            'margin': '10px'
+            'margin': {
+                    'b': '10px'}
         },
         # Allow multiple files to be uploaded
         multiple=True,
         ),
 #        html.H2("File List"),
 #        html.Ul(id="file-list"),
-#        html.Button(id='submit-button', n_clicks=0, children='Submit'),
+        html.Button(id='demo-button', n_clicks=0, children='Demo',
+        style={
+            'margin': '10px'
+        },),
 #        html.Div(id='output-image-upload'),
         
     dt.DataTable(
@@ -150,9 +154,11 @@ def file_download_link(filename):
 
 @app.callback(
     Output('datatable-gapminder', 'rows'),
-    [Input("upload-data", "filename"), Input("upload-data", "contents")],
+    [Input("upload-data", "filename"), Input("upload-data", "contents"),
+     Input('demo-button','n_clicks')],
 )
-def update_output(uploaded_filenames, uploaded_file_contents, pred_df=pred_df):
+def update_output(uploaded_filenames, uploaded_file_contents, button_clicks, 
+                  pred_df=pred_df):
     '''Clear folders before saving new content'''
     for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
@@ -163,13 +169,17 @@ def update_output(uploaded_filenames, uploaded_file_contents, pred_df=pred_df):
     if uploaded_filenames is not None and uploaded_file_contents is not None:
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
-
+        
     files = uploaded_files()
-    if len(files) == 0:
+    if (len(files) == 0) and (button_clicks==0):
         return pred_df.to_dict(orient='records')
 #        return [html.Li("No files yet!")]
     else:
-        classify, action_df, pred_df, bn_df = web_img_class(image_dir = UPLOAD_FOLDER,\
+        image_dir = UPLOAD_FOLDER
+        if button_clicks > 0:
+            image_dir = '../flask/demo_images'
+        
+        classify, action_df, pred_df, bn_df = web_img_class(image_dir = image_dir,\
                                  prediction_csv = 'malaria.csv',\
                                  trained_model = '../models/trained_log_reg.sav',\
                                  features_file1= '../results/prod_test_feat.csv',\
