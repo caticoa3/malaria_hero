@@ -16,7 +16,7 @@ from flask import Flask, render_template, send_from_directory #, request, redire
 #from werkzeug.utils import secure_filename
 from web_img_class_API import web_img_class
 #from umap_plots import umap_bokeh
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, Event
 #import dash_dangerously_set_inner_html
 import dash_core_components as dcc 
 import dash_html_components as html
@@ -109,6 +109,10 @@ app.layout = html.Div([
         style={
             'margin': '10px'
         },),
+        html.Button(id='reset', n_clicks=0, children='Reset',
+        style={
+            'margin': '10px'
+        },),
 #        html.Div(id='output-image-upload'),
         
     dt.DataTable(
@@ -156,9 +160,16 @@ def file_download_link(filename):
     Output('datatable-gapminder', 'rows'),
     [Input("upload-data", "filename"), Input("upload-data", "contents"),
      Input('demo-button','n_clicks')],
+
 )
 def update_output(uploaded_filenames, uploaded_file_contents, button_clicks, 
                   pred_df=pred_df):
+    
+    if button_clicks > 0:
+        image_dir = '../flask/demo_images'
+    else:
+        image_dir = UPLOAD_FOLDER
+    
     '''Clear folders before saving new content'''
     for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
@@ -169,26 +180,52 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
     if uploaded_filenames is not None and uploaded_file_contents is not None:
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
-        
+    
+    print('button_clicks',button_clicks)    
+    
     files = uploaded_files()
+    print('Files in upload folder', len(files))
+    # load example results when page is first loaded
     if (len(files) == 0) and (button_clicks==0):
+        pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0) 
         return pred_df.to_dict(orient='records')
 #        return [html.Li("No files yet!")]
-    else:
-        image_dir = UPLOAD_FOLDER
-        if button_clicks > 0:
-            image_dir = '../flask/demo_images'
-        
-        classify, action_df, pred_df, bn_df = web_img_class(image_dir = image_dir,\
-                                 prediction_csv = 'malaria.csv',\
-                                 trained_model = '../models/trained_log_reg.sav',\
-                                 features_file1= '../results/prod_test_feat.csv',\
-                                 min_samples1 = 0,\
-                                 training1= False)
+    else:        
+        classify, action_df, pred_df, bn_df = web_img_class(
+                             image_dir = image_dir,
+                             prediction_csv = 'malaria.csv',
+                             trained_model = '../models/trained_log_reg.sav',
+                             features_file1= '../results/prod_test_feat.csv',
+                             min_samples1 = 0,
+                             training1= False)
         
         return action_df.to_dict(orient='records')
-#    [html.Li(file_download_link(filename)) for filename in files]
 
+#reset demo button after it is clicked
+@app.callback(
+    Output('demo-button', 'n_clicks'),
+    events=[Event('reset','click')]
+    )
+def reset_demo_button():
+    for folder in ['../flask/uploads', '../results/']:
+        clear_folder(folder)
+    return 0
+
+@app.callback(
+    Output("upload-data", "filename"),
+    events=[Event('reset','click')]
+    )
+def clear_upload_filename():
+    return None
+
+@app.callback(
+    Output("upload-data", "contents"),
+    events=[Event('reset','click')]
+    )
+def clear_upload_contents():
+    return None
+
+#    [html.Li(file_download_link(filename)) for filename in files]
 # -- bokeh plot update
 #@app.callback(
 #    Output('bokeh_script', 'children'),
