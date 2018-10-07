@@ -2,20 +2,30 @@ version: '3'
 services:
 
   api:
-    container_name: malaria # Name can be anything
+#    container_name: malaria # Name can be anything
     restart: always
+    image: insight_api
     build: .
     environment:
        PYTHONUNBUFFERED: 'true'   
     ports:
       - "5000:5000"
+    networks:
+      - mynetwork
     command: gunicorn --timeout 180 --worker-class eventlet -b :5000 dash_table:server #-w 3 -t 10
 
   nginx:
-    container_name: nginx
+#    container_name: nginx
+    image: insight_nginx
     restart: always
     build: ./nginx
     ports:
       - "80:8000"
     depends_on:
       - api
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    external: true

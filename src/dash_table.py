@@ -193,7 +193,7 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
         return pred_df.to_dict(orient='records')
 #        return [html.Li("No files yet!")]
     else:        
-        classify, action_df, pred_df, bn_df = web_img_class(
+        action_df = web_img_class(
                              image_dir = image_dir,
                              prediction_csv = 'malaria.csv',
                              trained_model = '../models/trained_log_reg.sav',

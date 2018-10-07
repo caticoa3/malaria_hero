@@ -10,6 +10,7 @@ import pickle
 import re
 from features_to_DF import gen_bn_features
 import sys
+import gc
 
 #Test data for building pipeline
 #d = {'URL' : ['https://nutcasehelmets.com/collections/adult/products/technicolor-with-mips','https://www.amazon.com']}
@@ -83,8 +84,11 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     #Extract file name from bn_feat dataframe into a new df
     #Load csv file into pandas dataframe
     #add predicted labels and save a new csv
+    
+    
     files_processed = bn_feat.loc[:,['fn']]
     
+    del bn_feat, pca
     #file neame processing: C33P1thinF_IMG_20150619_114756a_cell_181.png, C1_thinF_IMG_20150604_104722_cell_81.png, C6NThinF_IMG_20150609_121955_cell_51.png
     def split_it(row):
         c = re.findall('C(\d{1,3})',row['fn'])
@@ -125,8 +129,12 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
     actionable_table['% Infected Cells'] = actionable_table['% Infected Cells'].map('{:,.2f}'.format).astype(float)
     actionable_table.to_csv('../results/actionable_table.csv')
     print(actionable_table.head())
+    # collect garbage
+    del files_processed
+    gc.collect()
     
-    return files_processed.to_html(index=False), actionable_table, files_processed, bn_feat
+    
+    return actionable_table # bn_feat, files_processed.to_html(index=False)
     #'Modified uploaded file with predictions:\n{0}'.format(urls)
     #Import data from csv into a pandas dataframe
     

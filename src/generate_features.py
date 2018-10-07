@@ -49,7 +49,9 @@ class FeatureGen(object):
             self.bottleneck_tensor,
             {self.image_data_tensor: img_data})
         return np.squeeze(bottleneck_values)
-
+    
+    def session_close(self):
+        self.sess.close()
 
 if __name__ == "__main__":
     import sys

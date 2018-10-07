@@ -11,6 +11,7 @@ import os
 from generate_features import FeatureGen
 from pathlib import Path
 import pandas as pd
+import gc
 #URL_file = pd.read_csv('../Webcapture/URLs_for_pipeline building.csv')
 
 def gen_bn_features(image_dir='../datasets/cell_images/',
@@ -86,6 +87,12 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
                   str(len_img_file - i), 'image ramain.\n', sep=' ')
         elif i > (len_img_file - 40):
             feat_df.to_csv(bn_features_file)
+        
+        #close the tensor flow session
+    gen.session_close()
+    
+    gc.collect()
+
 
     if min_samples > 0:
         # Filter out labels with very few samples (minimum number of samples).
@@ -101,11 +108,12 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
         print('These labels had more than', min_samples, 'samples:', keep_labels)
         print('Saved to filtered_', bn_features_file)
         bn_feat_for_ml.to_csv('filtered_' + bn_features_file)
+        gc.collect()
         return bn_feat_for_ml
     else:
+        gc.collect()
         # If no filtering then return all features extacted from images
         return feat_df
-
 #gen_bn_features(image_dir = '../datasets/cell_images/', training = True)
 
 
