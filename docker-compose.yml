@@ -9,7 +9,7 @@ services:
        PYTHONUNBUFFERED: 'true'   
     ports:
       - "5000:5000"
-    command: gunicorn -w 3 -t 10 --timeout 180 --worker-class eventlet -b :5000 dash_table:server
+    command: gunicorn --timeout 180 --worker-class eventlet -b :5000 dash_table:server #-w 3 -t 10
 
   nginx:
     container_name: nginx
