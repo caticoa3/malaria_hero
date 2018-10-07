@@ -107,11 +107,13 @@ app.layout = html.Div([
 #        html.Ul(id="file-list"),
         html.Button(id='demo-button', n_clicks=0, children='Demo',
         style={
-            'margin': '10px'
+            'margin': '10px',
+            'fontSize': 14
         },),
-        html.Button(id='reset', n_clicks=0, children='Reset',
+        html.Button(id='reset-button', n_clicks=0, children='Reset',
         style={
-            'margin': '10px'
+            'margin': '10px',
+            'fontSize': 14
         },),
 #        html.Div(id='output-image-upload'),
         
@@ -201,10 +203,27 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
         
         return action_df.to_dict(orient='records')
 
+@app.callback(
+    Output('reset-button', 'style'),
+    [Input('demo-button','n_clicks')],
+    )
+def color_demo_button(clicks):
+    if clicks > 0:          
+        return {
+                'margin': '10px',
+                'backgroundColor': '#F45555',
+                'fontSize': 14
+                }
+    else:
+        return {
+                'margin': '10px',
+                'fontSize': 14
+                }
+        
 #reset demo button after it is clicked
 @app.callback(
     Output('demo-button', 'n_clicks'),
-    events=[Event('reset','click')]
+    events=[Event('reset-button','click')]
     )
 def reset_demo_button():
     for folder in ['../flask/uploads', '../results/']:
@@ -213,14 +232,14 @@ def reset_demo_button():
 
 @app.callback(
     Output("upload-data", "filename"),
-    events=[Event('reset','click')]
+    events=[Event('reset-button','click')]
     )
 def clear_upload_filename():
     return None
 
 @app.callback(
     Output("upload-data", "contents"),
-    events=[Event('reset','click')]
+    events=[Event('reset-button','click')]
     )
 def clear_upload_contents():
     return None
