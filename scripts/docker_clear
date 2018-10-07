@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "clearing running docker containers without removing services..."
+
 echo "removing running docker containers..."
 docker rm -f $(docker ps -aq)
 
@@ -8,3 +10,4 @@ docker rmi $(docker images -qf "dangling=true")
 
 echo "removing dangling volumes..."
 docker volume rm $(docker volume ls -qf "dangling=true")
+
