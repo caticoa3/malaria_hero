@@ -119,6 +119,13 @@ def web_img_class(image_dir= [], prediction_csv = 'predictions.csv',
         return row
     cell_counts = files_processed.groupby(by=['Patient','Predicted_label','Slide']).agg({'Cell':'count'})
     totals = cell_counts.groupby(level=0).apply(percent_n_sum).reset_index()
+    #Mask to catch uninfected patients: when no cells are deemed parasitized
+    uninfected_mask = ((totals['Predicted_label'] == 'Uninfected') &
+                      (totals['% Infected Cells'].astype(int) == 100))
+    #Change label to parazitized and % infection to 0 for uninfected patients
+    totals.loc[uninfected_mask,['Predicted_label','% Infected Cells']] = 'Parasitized', 0
+    
+    #Mask to determine each patients infection level
     parasite_mask = totals['Predicted_label'] == 'Parasitized'
     actionable_table = totals.loc[parasite_mask,:].drop(columns=['Slide','Predicted_label','Cell'])
     # Format total cells examined to integer

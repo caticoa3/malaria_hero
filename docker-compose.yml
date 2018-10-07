@@ -4,7 +4,7 @@ services:
   api:
 #    container_name: malaria # Name can be anything
     restart: always
-    image: insight_api
+    image: malaria_hero_api
     build: .
     environment:
        PYTHONUNBUFFERED: 'true'   
@@ -16,7 +16,7 @@ services:
 
   nginx:
 #    container_name: nginx
-    image: insight_nginx
+    image: malaria_hero_nginx
     restart: always
     build: ./nginx
     ports:
