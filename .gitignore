@@ -1,3 +1,4 @@
+*.xcf
 *data
 dns_servers.txt
 *open_source_code*
@@ -16,6 +17,7 @@ webcapture/*
 *.zip
 *.sav
 *.jpg
+!malaria_hero.jpg
 
 # From https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
