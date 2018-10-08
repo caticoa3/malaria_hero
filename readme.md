@@ -1,5 +1,5 @@
 
-[Malaria Hero](malaria_hero.jpg)
+[Malaria Hero](/images/malaria_hero.jpg)
 Format: ![Alt Text](url)
 
 Modified image from the Center For Infectous Disease Research
