@@ -1,6 +1,6 @@
-
-[Malaria Hero](/images/malaria_hero.jpg)
-Format: ![Alt Text](url)
+<p align="center">
+  <img src="https://github.com/caticoa3/malaria_hero/blob/master/images/malaria_hero.jpg?raw=true" alt="Malaria Hero"/>
+</p>
 
 Modified image from the Center For Infectous Disease Research
 https://www.cidresearch.org/blog/human-vs-pathogen-the-art-of-battling-infectious-disease
