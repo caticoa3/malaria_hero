@@ -190,19 +190,16 @@ def ML_with_BN_feat(bn_feat_file='../data/factors_n_bn_feat.csv', n_comp=100,
     fig, axs = plt.subplots(1, 4, sharey=True, figsize=(15, 8.5))
     font = {'linespacing':1.5, #'family': 'serif', 'color':  'darkred', 'weight': 'normal',
             'size': 14}
-    
-    
-    # ## Exploring Different Algorithms For Mutliclass Classfication
-    
-    
+     
+    # ## Exploring Different Algorithms For Mutliclass Classfication 
     
     #Metric in this case is F2 
     from sklearn.metrics import fbeta_score, make_scorer
     ftwo_scorer = make_scorer(fbeta_score, beta=2)
     # In[7.5]:
     # Let's scale the features and plug into logisitc regression classifier
-    from sklearn.preprocessing import StandardScaler
-    X_scaled = StandardScaler().fit_transform(X_train)
+#    from sklearn.preprocessing import StandardScaler
+#    X_scaled = StandardScaler().fit_transform(X_train)
     
     from sklearn import linear_model
     log_reg_classifier = linear_model.LogisticRegression(penalty='l2', tol=0.0001, C=1.0, 

@@ -138,6 +138,9 @@ zorders = {label_list[0]:1, label_list[1]:0 }
 
 cv_df.fillna(0,inplace=True)
 cv_df['blob_detected'] = cv_df['blob_detected']*1
+#Visualizing color and BLOB features only
+#cv_df = cv_df[['label', 'fn', 'average_blue', 'average_green', 'average_red', 
+#               'blob_detected', 'num_of_blobs', 'average_blob_area']]
 #cv_df.groupby('label').hist(alpha=0.4)
 fig, subplots = plt.subplots(2, 5, squeeze=True, figsize=(15,8.5))
 subplots = subplots.ravel()
