@@ -20,7 +20,6 @@ ADD requirements_pip.txt /insight/
 RUN conda update conda
 RUN conda config --add channels conda-forge
 RUN conda config --append channels menpo
-RUN conda config --append channels defaults
 RUN conda install --yes --file requirements_conda.txt
 #RUN conda install python=3.5.4
 #RUN while read requirement; do conda install --yes $requirement; done < requirements_conda.txt

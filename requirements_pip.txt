@@ -1,7 +1,10 @@
 keras==2.1.1
 selenium==3.7.0
-tensorflow==1.4.0
-tensorflow-tensorboard==0.4.0rc3
-dash_core_components
-dash_html_components
-dash_table_experiments
+# tensorflow>=1.15.2
+# tensorflow-tensorboard==0.4.0rc3
+# dash_core_components
+# dash_html_components
+# dash_table_experiments
+
+# conda
+# tensorflow, pandas, dash, pillow, scikit-learn, flask-wtf, werkzeug=0.16.1, conda install -c conda-forge umap-learn, bokeh,  
