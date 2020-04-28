@@ -16,15 +16,15 @@ class FeatureGen(object):
         #  self.image_data_tensor = JPEG_DATA_TENSOR_NAME
         #  self.bottleneck_tensor = BOTTLENECK_TENSOR_NAME
         self.load_graph()
-        self.sess = tf.Session()
+        self.sess = tf.compat.v1.Session()
 
     def load_graph(self):
         self.model_filename = os.path.join(
             '../models','classify_image_graph_def.pb')
 
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             with gfile.FastGFile(self.model_filename, 'rb') as f:
-                graph_def = tf.GraphDef()
+                graph_def = tf.compat.v1.GraphDef()
                 graph_def.ParseFromString(f.read())
                 (self.bottleneck_tensor,
                  self.image_data_tensor,
