@@ -114,16 +114,16 @@ app.layout = html.Div([
 #        html.Div(id='output-image-upload'),
 
     dt.DataTable(
-        data=pred_df.to_dict('rows'),
+        data=pred_df.to_dict('records'),
 
         # optional - sets the order of columns
         columns=[{"name": i, "id": i} for i in pred_df.columns],
 
-        row_selectable='multi',
+        # row_selectable='multi',
         filter_action='native',
         sort_action='native',
         # selected_row_ids=[],
-        id='datatable-gapminder'
+        id='summary-table'
     ),
 #    html.Div(id='selected-indexes'),
 #    dcc.Graph(
@@ -155,7 +155,7 @@ def file_download_link(filename):
     return html.A(filename, href=location)
 
 @app.callback(
-    Output('datatable-gapminder', 'rows'),
+    Output('summary-table', 'data'),
     [Input("upload-data", "filename"), Input("upload-data", "contents"),
      Input('demo-button','n_clicks')],
 
@@ -247,7 +247,7 @@ def clear_upload_contents(n_clicks, input_value):
 # -- bokeh plot update
 #@app.callback(
 #    Output('bokeh_script', 'children'),
-#    [Input('datatable-gapminder', "rows")],
+#    [Input('summary-table', "rows")],
 #)
 #def bokeh_update(rows):
 #        bn_df = pd.read_csv('../results/prod_test_feat.csv', index_col=0)
@@ -265,9 +265,9 @@ def clear_upload_contents(n_clicks, input_value):
 #
 # -- interactive table and graph creation
 @app.callback(
-    Output('datatable-gapminder', 'selected_row_indices'),
+    Output('summary-table', 'selected_row_indices'),
     [Input('graph-gapminder', 'clickData')],
-    [State('datatable-gapminder', 'selected_row_indices')])
+    [State('summary-table', 'selected_row_indices')])
 def update_selected_row_indices(clickData, selected_row_indices):
     if clickData:
         for point in clickData['points']:
@@ -280,8 +280,8 @@ def update_selected_row_indices(clickData, selected_row_indices):
 
 #@app.callback(
 #    Output('graph-gapminder', 'figure'),
-#    [Input('datatable-gapminder', 'rows'),
-#     Input('datatable-gapminder', 'selected_row_indices')])
+#    [Input('summary-table', 'rows'),
+#     Input('summary-table', 'selected_row_indices')])
 #def update_figure(rows, selected_row_indices):
 #    dff = pd.DataFrame(rows)
 #    fig = plotly.tools.make_subplots(
