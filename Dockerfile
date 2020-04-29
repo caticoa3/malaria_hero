@@ -14,20 +14,20 @@ WORKDIR /insight
 
 #Copy the requirements for setting up the evironment
 ADD requirements_conda.txt /insight/
-ADD requirements_pip.txt /insight/
+#ADD requirements_pip.txt /insight/
 
 #Installing python3.5.4 and required libraries
 RUN conda update conda
 RUN conda config --add channels conda-forge
 RUN conda config --append channels menpo
-RUN conda install --yes --file requirements_conda.txt
+RUN conda install --yes --quiet --file requirements_conda.txt
 #RUN conda install python=3.5.4
 #RUN while read requirement; do conda install --yes $requirement; done < requirements_conda.txt
 #RUN rm -rf /opt/conda/pkgs/
 
 #Install the libraries using pip install
 #Creating the environemnt with conda env did not work in docker
-RUN pip install -r requirements_pip.txt
+#RUN pip install -r requirements_pip.txt
 RUN conda clean --yes --tarballs
 
 #Copy the $INSIGHT contents into the container at /insight

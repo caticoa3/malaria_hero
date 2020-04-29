@@ -12,7 +12,7 @@ services:
       - "5000:5000"
     networks:
       - mynetwork
-    command: gunicorn --timeout 180 --worker-class eventlet -b :5000 dash_table:server #-w 3 -t 10
+    command: gunicorn --timeout 180 --worker-class eventlet -b :5000 dash_app:server #-w 3 -t 10
 
   nginx:
 #    container_name: nginx

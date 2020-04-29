@@ -2,29 +2,20 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 24 23:36:06 2018
-
-@author: Carlos A Ariza, PhD
+@author: Carlos A Ariza
 """
 
 import base64
 import os
 from urllib.parse import quote as urlquote
 import dash
-from flask import Flask, send_from_directory #, request, redirect, url_for, flash
-#from flask_wtf import FlaskForm
-#from wtforms import IntegerField, RadioField
-#from werkzeug.utils import secure_filename
+from flask import Flask, send_from_directory
 from web_img_class_API import web_img_class
-#from umap_plots import umap_bokeh
 from dash.dependencies import Input, Output, State
-#import dash_dangerously_set_inner_html
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
-#import json
 import pandas as pd
-#import numpy as np
-#import datetime
 
 UPLOAD_FOLDER = '../flask/uploads'
 for setup_dir in [UPLOAD_FOLDER, '../results/']:
@@ -32,15 +23,16 @@ for setup_dir in [UPLOAD_FOLDER, '../results/']:
         os.makedirs(setup_dir)
 
 server = Flask(__name__)
-server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #Sets the maximum allowable upload size
+# Sets the maximum allowable upload size
+server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
 server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 
-app.config['suppress_callback_exceptions']=True
+app.config['suppress_callback_exceptions'] = True
 app.scripts.config.serve_locally = True
-# app.css.config.serve_locally = True
+
 
 def clear_folder(folder):
     for the_file in os.listdir(folder):
@@ -48,16 +40,18 @@ def clear_folder(folder):
         try:
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+            # elif os.path.isdir(file_path): shutil.rmtree(file_path)
         except Exception as e:
             print(e)
 
-@server.route("/download/<path:path>")
+
+@server.route('/download/<path:path>')
 def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory(UPLOAD_FOLDER, path, as_attachment=True)
 
-#Load example results
+
+# Load example results
 pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
 
 
@@ -78,7 +72,7 @@ ROWS = [
 
 app.layout = html.Div([
     html.H4('Malaria Hero'),
-#    https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
+    #    https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -99,46 +93,46 @@ app.layout = html.Div([
         # Allow multiple files to be uploaded
         multiple=True,
         ),
-#        html.H2("File List"),
-#        html.Ul(id="file-list"),
-        html.Button(id='demo-button', n_clicks=0, children='Demo',
-        style={
-            'margin': '10px',
-            'fontSize': 14
-        },),
-        html.Button(id='reset-button', n_clicks=0, children='Reset',
-        style={
-            'margin': '10px',
-            'fontSize': 14
-        },),
-#        html.Div(id='output-image-upload'),
+    #        html.H2('File List'),
+    #        html.Ul(id='file-list'),
+    html.Button(id='demo-button', n_clicks=0, children='Demo',
+                style={
+                        'margin': '10px',
+                        'fontSize': 14
+                        },),
+    html.Button(id='reset-button', n_clicks=0, children='Reset',
+                style={
+                        'margin': '10px',
+                        'fontSize': 14
+                        },),
+    #        html.Div(id='output-image-upload'),
 
     dt.DataTable(
         data=pred_df.to_dict('records'),
 
         # optional - sets the order of columns
-        columns=[{"name": i, "id": i} for i in pred_df.columns],
+        columns=[{'name': i, 'id': i} for i in pred_df.columns],
 
-        # row_selectable='multi',
         filter_action='native',
         sort_action='native',
-        # selected_row_ids=[],
         id='summary-table'
     ),
-#    html.Div(id='selected-indexes'),
-#    dcc.Graph(
-#        id='graph-gapminder'
-#    ),
-#    html.H1('UMAP'),
-#    html.Div(id='bokeh_script',
-#             children = 'placeholder for plot')
- ], className="container")
+    #    html.Div(id='selected-indexes'),
+    #    dcc.Graph(
+    #        id='graph-gapminder'
+    #    ),
+    #    html.H1('UMAP'),
+    #    html.Div(id='bokeh_script',
+    #             children = 'placeholder for plot')
+ ], className='container')
+
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
-    data = content.encode("utf8").split(b";base64,")[1]
-    with open(os.path.join(UPLOAD_FOLDER, name), "wb") as fp:
+    data = content.encode('utf8').split(b';base64,')[1]
+    with open(os.path.join(UPLOAD_FOLDER, name), 'wb') as fp:
         fp.write(base64.decodebytes(data))
+
 
 def uploaded_files():
     """List the files in the upload directory."""
@@ -149,15 +143,17 @@ def uploaded_files():
             files.append(filename)
     return files
 
+
 def file_download_link(filename):
     """Create a Plotly Dash 'A' element that downloads a file from the app."""
-    location = "/download/{}".format(urlquote(filename))
+    location = '/download/{}'.format(urlquote(filename))
     return html.A(filename, href=location)
+
 
 @app.callback(
     Output('summary-table', 'data'),
-    [Input("upload-data", "filename"), Input("upload-data", "contents"),
-     Input('demo-button','n_clicks')],
+    [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
+     Input('demo-button', 'n_clicks')],
 
 )
 def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
@@ -179,29 +175,30 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
 
-    print('button_clicks',button_clicks)
+    print('button_clicks', button_clicks)
 
     files = uploaded_files()
     print('Files in upload folder', len(files))
     # load example results when page is first loaded
-    if (len(files) == 0) and (button_clicks==0):
+    if (len(files) == 0) and (button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
         return pred_df.to_dict(orient='records')
-#        return [html.Li("No files yet!")]
+#        return [html.Li('No files yet!')]
     else:
         action_df = web_img_class(
-                             image_dir = image_dir,
-                             prediction_csv = 'malaria.csv',
-                             trained_model = '../models/trained_log_reg.sav',
-                             features_file1= '../results/prod_test_feat.csv',
-                             min_samples1 = 0,
-                             training1= False)
+                             image_dir=image_dir,
+                             prediction_csv='malaria.csv',
+                             trained_model='../models/trained_log_reg.sav',
+                             features_file1='../results/prod_test_feat.csv',
+                             min_samples1=0,
+                             training1=False)
 
         return action_df.to_dict(orient='records')
 
+
 @app.callback(
     Output('reset-button', 'style'),
-    [Input('demo-button','n_clicks')],
+    [Input('demo-button', 'n_clicks')],
     )
 def color_demo_button(clicks):
     if clicks > 0:
@@ -216,28 +213,31 @@ def color_demo_button(clicks):
                 'fontSize': 14
                 }
 
-#reset demo button after it is clicked
+
+# reset demo button after it is clicked
 @app.callback(
     Output('demo-button', 'n_clicks'),
     [Input('reset-button', 'click')],
-    state=[State('upload-data', 'value')]
+    state=[State('demo-button', 'value')]
     )
 def reset_demo_button(n_clicks, input_value):
     for folder in ['../flask/uploads', '../results/']:
         clear_folder(folder)
     return 0
 
+
 @app.callback(
-    Output("upload-data", "filename"),
-    [Input('reset-button','click')],
+    Output('upload-data', 'filename'),
+    [Input('reset-button', 'click')],
     state=[State('upload-data', 'value')]
     )
 def clear_upload_filename(n_clicks, input_value):
     return None
 
+
 @app.callback(
-    Output("upload-data", "contents"),
-    [Input('reset-button','click')],
+    Output('upload-data', 'contents'),
+    [Input('reset-button', 'click')],
     state=[State('upload-data', 'value')]
     )
 def clear_upload_contents(n_clicks, input_value):
@@ -245,11 +245,11 @@ def clear_upload_contents(n_clicks, input_value):
 
 #    [html.Li(file_download_link(filename)) for filename in files]
 # -- bokeh plot update
-#@app.callback(
+# @app.callback(
 #    Output('bokeh_script', 'children'),
-#    [Input('summary-table', "rows")],
-#)
-#def bokeh_update(rows):
+#    [Input('summary-table', 'rows')],
+# )
+# def bokeh_update(rows):
 #        bn_df = pd.read_csv('../results/prod_test_feat.csv', index_col=0)
 #        pred_df = pd.DataFrame(rows)
 #        if pred_df.shape[0] > 3:
@@ -260,10 +260,12 @@ def clear_upload_contents(n_clicks, input_value):
 #                            image_folder =UPLOAD_FOLDER)
 #        else:
 #            html = 'Plotting error: At least 4 cells are need for plots.'
-##            div = ''
+# #            div = ''
 #        return html #script
 #
 # -- interactive table and graph creation
+
+
 @app.callback(
     Output('summary-table', 'selected_row_indices'),
     [Input('graph-gapminder', 'clickData')],
@@ -278,11 +280,11 @@ def update_selected_row_indices(clickData, selected_row_indices):
     return selected_row_indices
 
 
-#@app.callback(
+# @app.callback(
 #    Output('graph-gapminder', 'figure'),
 #    [Input('summary-table', 'rows'),
 #     Input('summary-table', 'selected_row_indices')])
-#def update_figure(rows, selected_row_indices):
+# def update_figure(rows, selected_row_indices):
 #    dff = pd.DataFrame(rows)
 #    fig = plotly.tools.make_subplots(
 #        rows=2, cols=1, #rows=3
@@ -322,8 +324,8 @@ def update_selected_row_indices(clickData, selected_row_indices):
 #        't': 60,
 #        'b': 200
 #    }
-##    plotly.offline.plot(fig)
-##    fig['layout']['yaxis3']['type'] = 'log'
+# plotly.offline.plot(fig)
+# #    fig['layout']['yaxis3']['type'] = 'log'
 #    return fig
 
 
