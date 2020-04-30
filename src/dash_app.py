@@ -154,7 +154,6 @@ def file_download_link(filename):
     Output('summary-table', 'data'),
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
-
 )
 def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
                   pred_df=pred_df):
@@ -175,10 +174,10 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
 
-    print('button_clicks', button_clicks)
+    print(f'demo button at {button_clicks} clicks')
 
     files = uploaded_files()
-    print('Files in upload folder', len(files))
+    print('files in upload folder', len(files))
     # load example results when page is first loaded
     if (len(files) == 0) and (button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
@@ -214,34 +213,29 @@ def color_demo_button(clicks):
                 }
 
 
-# reset demo button after it is clicked
+# reset "demo button" after "reset button" is clicked
 @app.callback(
     Output('demo-button', 'n_clicks'),
-    [Input('reset-button', 'click')],
+    [Input('reset-button', 'n_clicks')],
     state=[State('demo-button', 'value')]
     )
 def reset_demo_button(n_clicks, input_value):
     for folder in ['../flask/uploads', '../results/']:
         clear_folder(folder)
+    print('upload and result folders cleared')
     return 0
 
 
 @app.callback(
-    Output('upload-data', 'filename'),
-    [Input('reset-button', 'click')],
-    state=[State('upload-data', 'value')]
+    [Output('upload-data', 'filename'),
+     Output('upload-data', 'contents')],
+    [Input('reset-button', 'n_clicks')],
+    state=[State('demo-button', 'value')]
     )
 def clear_upload_filename(n_clicks, input_value):
-    return None
+    print(f'reset button clicked')
+    return None, None
 
-
-@app.callback(
-    Output('upload-data', 'contents'),
-    [Input('reset-button', 'click')],
-    state=[State('upload-data', 'value')]
-    )
-def clear_upload_contents(n_clicks, input_value):
-    return None
 
 #    [html.Li(file_download_link(filename)) for filename in files]
 # -- bokeh plot update
