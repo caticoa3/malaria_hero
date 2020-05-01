@@ -1,7 +1,0 @@
-keras==2.1.1
-selenium==3.7.0
-tensorflow==1.4.0
-tensorflow-tensorboard==0.4.0rc3
-dash_core_components
-dash_html_components
-dash_table_experiments
