@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:latest
 
 EXPOSE 5000
 
-#Install updates to Ubuntu base if any 
+# Install updates to Ubuntu base if any 
 RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
