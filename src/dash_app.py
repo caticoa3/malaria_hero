@@ -12,6 +12,7 @@ import dash
 from flask import Flask, send_from_directory
 from web_img_class_API import web_img_class
 from dash.dependencies import Input, Output, State
+import plotly.express as px
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
@@ -33,6 +34,8 @@ app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
 app.scripts.config.serve_locally = True
 
+app.scripts.append_script({'external_url' : 'https://malariahero.com/'})
+
 
 def clear_folder(folder):
     for the_file in os.listdir(folder):
@@ -53,7 +56,10 @@ def download(path):
 
 # Load example results
 pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
-
+pred_df = pred_df.sort_values('% Infected Cells')
+pred_df['Patient'] = pred_df['Patient'].astype(str)
+fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
+fig.update_layout(yaxis_type = 'category')
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -117,6 +123,7 @@ app.layout = html.Div([
         sort_action='native',
         id='summary-table'
     ),
+    dcc.Graph(figure=fig)
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
