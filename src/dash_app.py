@@ -56,7 +56,8 @@ def download(path):
 
 
 # Load example results
-pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
+pred_df = pd.read_csv('../primed_results/init_table.gz',
+                      compression='gzip')
 pred_df = pred_df.sort_values('% Infected Cells')
 pred_df['Patient'] = pred_df['Patient'].astype(str)
 fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
@@ -188,7 +189,8 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
     print('files in upload folder', len(files))
     # load example results when page is first loaded
     if (len(files) == 0) and (button_clicks == 0):
-        pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
+        pred_df = pd.read_csv('../primed_results/init_table.gz',
+                              compression='gzip')
         return pred_df.to_dict(orient='records')
 #        return [html.Li('No files yet!')]
     else:
