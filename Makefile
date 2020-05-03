@@ -20,7 +20,6 @@ prepare_images:
 
 deploy:
 
-	docker swarm leave -f
 	docker swarm init
 	docker network create --driver=overlay --attachable mynetwork
 	docker stack deploy -c docker-compose.yml malaria_hero
@@ -32,6 +31,8 @@ docker_allclear:
 
 	@echo "removing running docker containers..."
 	docker rm -f $$(docker ps -aq)
+
+	docker swarm leave -f
 
 	@echo "removing dangling docker images..."
 	docker rmi $$(docker images -qf "dangling=true")
