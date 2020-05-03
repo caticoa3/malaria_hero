@@ -1,5 +1,10 @@
+prepare_images: 
+	docker pull atico/malaria_hero_api 
+	docker-compose build nginx
+
 deploy:
 
+	docker swarm leave -f
 	docker swarm init
 	docker network create --driver=overlay --attachable mynetwork
 	docker stack deploy -c docker-compose.yml malaria_hero

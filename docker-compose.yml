@@ -4,8 +4,7 @@ services:
   api:
 #    container_name: malaria # Name can be anything
     restart: always
-    image: malaria_hero_api
-    build: .
+    image: atico/malaria_hero_api
     environment:
        PYTHONUNBUFFERED: 'true'   
     ports:
