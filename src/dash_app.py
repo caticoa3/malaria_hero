@@ -34,7 +34,8 @@ app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
 app.scripts.config.serve_locally = True
 
-app.scripts.append_script({'external_url' : 'https://malariahero.com/'})
+app.scripts.append_script(
+    {'external_url': 'https://malariahero.com/assets/gtag.js'})
 
 
 def clear_folder(folder):
@@ -59,7 +60,7 @@ pred_df = pd.read_csv('../primed_results/init_table.csv', index_col=0)
 pred_df = pred_df.sort_values('% Infected Cells')
 pred_df['Patient'] = pred_df['Patient'].astype(str)
 fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
-fig.update_layout(yaxis_type = 'category')
+fig.update_layout(yaxis_type='category')
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
