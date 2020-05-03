@@ -12,7 +12,10 @@ setup_instance:
 prepare_images: 
 
 	docker pull atico/malaria_hero_api 
+	@echo "removing dangling docker images..."
 	docker-compose build nginx
+
+	docker rmi $$(docker images -qf "dangling=true")
 
 deploy:
 
