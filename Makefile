@@ -1,4 +1,16 @@
+setup_instance:
+
+	sudo yum update -y
+	sudo yum install git
+	git clone https://github.com/caticoa3/malaria_hero.git 
+
+	sudo yum install docker -y
+	sudo service start docker
+	sudo usermod -a -G docker ec2-user
+	pip install docker-compose
+
 prepare_images: 
+
 	docker pull atico/malaria_hero_api 
 	docker-compose build nginx
 
@@ -15,26 +27,26 @@ docker_allclear:
 	docker stack rm malaria_hero
 
 	@echo "removing running docker containers..."
-	docker rm -f $(docker ps -aq)
+	docker rm -f $$(docker ps -aq)
 
 	@echo "removing dangling docker images..."
-	docker rmi $(docker images -qf "dangling=true")
+	docker rmi $$(docker images -qf "dangling=true")
 
 	@echo "removing dangling volumes..."
-	docker volume rm $(docker volume ls -qf "dangling=true")
+	docker volume rm $$(docker volume ls -qf "dangling=true")
 
 clear:
 
 	@echo "clearing running docker containers without removing services..."
 
 	@echo "removing running docker containers..."
-	docker rm -f $(docker ps -aq)
+	docker rm -f $$(docker ps -aq)
 
 	@echo "removing dangling docker images..."
-	docker rmi $(docker images -qf "dangling=true")
+	docker rmi $$(docker images -qf "dangling=true")
 
 	@echo "removing dangling volumes..."
-	docker volume rm $(docker volume ls -qf "dangling=true")
+	docker volume rm $$(docker volume ls -qf "dangling=true")
 
 docker_launch:
 
