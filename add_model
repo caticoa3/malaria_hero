@@ -1,0 +1,3 @@
+FROM atico/malaria_hero_api:latest
+COPY ./models/classify_image_graph_def.pb /models/classify_image_graph_def.pb
+
