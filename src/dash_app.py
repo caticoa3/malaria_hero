@@ -34,9 +34,6 @@ app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
 app.scripts.config.serve_locally = True
 
-app.scripts.append_script(
-    {'external_url': 'https://malariahero.com/assets/gtag.js'})
-
 
 def clear_folder(folder):
     for the_file in os.listdir(folder):
@@ -243,7 +240,7 @@ def reset_demo_button(n_clicks, input_value):
     state=[State('demo-button', 'value')]
     )
 def clear_upload_filename(n_clicks, input_value):
-    print(f'reset button clicked')
+    print('reset button clicked')
     return None, None
 
 

@@ -1,6 +1,6 @@
 sudo yum update -y
 sudo yum install git
-git clone 
+git clone https://github.com/caticoa3/malaria_hero.git 
 #transfer trained models
 scp -i ~carlos/Desktop/AWS\ self\ guided\ tutorial/learning.pem -r models/ ec2-user@ec2-18-188-29-9.us-east-2.compute.amazonaws.com:~/malaria/models
 
