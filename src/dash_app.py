@@ -32,7 +32,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 
 app.config['suppress_callback_exceptions'] = True
-app.scripts.config.serve_locally = False
 app.scripts.append_script({
     'external_script': 'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/async.js'
 })
