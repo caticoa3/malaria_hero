@@ -33,10 +33,10 @@ app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
 
 app.config['suppress_callback_exceptions'] = True
 app.scripts.append_script({
-    'external_script': 'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/async.js'
+    'external_url': 'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/async.js'
 })
 app.scripts.append_script({
-    'external_script': 'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/gtag.js'
+    'external_url': 'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/gtag.js'
 })
 
 
