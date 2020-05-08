@@ -9,11 +9,10 @@ setup_instance:
 	sudo usermod -a -G docker ec2-user
 	pip install docker-compose
 
-prepare_images: 
+build_images: 
 
-	#docker pull atico/malaria_hero_api 
-	@echo "removing dangling docker images..."
 	docker-compose build 
+	@echo "removing dangling docker images..."
 	docker rmi $$(docker images -qf "dangling=true")
 
 deploy:

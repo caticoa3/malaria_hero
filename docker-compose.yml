@@ -5,7 +5,7 @@ services:
   api:
 #    container_name: malaria # Name can be anything
     restart: always
-    image: atico/malaria_hero_api
+    image: malaria_hero_model
     build: 
         dockerfile: Dockerfile.add_model
         context: .
