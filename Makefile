@@ -12,14 +12,18 @@ setup_instance:
 build_images: 
 
 	docker-compose build 
-	@echo "removing dangling docker images..."
-	docker rmi $$(docker images -qf "dangling=true")
 
 deploy:
 
 	docker swarm init
 	docker network create --driver=overlay --attachable mynetwork
 	docker stack deploy -c docker-compose.yml malaria_hero
+
+update_and_deploy:
+
+	make docker_allclear
+	make build_images
+	make deploy
 
 docker_allclear:
 
@@ -66,7 +70,7 @@ update_all_submodules:
 
 view_log:
 
-	docker logs $$(docker ps -qf "name=malaria_hero_api")
+	docker logs $$(docker ps -qf "name=malaria_hero_api") -f
 
 browse_files:
 

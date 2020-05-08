@@ -1,3 +1,3 @@
 FROM atico/malaria_hero_api:latest
-ADD ./models/classify_image_graph_def.pb /insight/models/classify_image_graph_def.pb
+ADD ./models/ /insight/models/
 
