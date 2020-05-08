@@ -11,12 +11,10 @@ setup_instance:
 
 prepare_images: 
 
-
 	docker pull atico/malaria_hero_api 
 	@echo "removing dangling docker images..."
 	docker-compose build nginx
 	docker rmi $$(docker images -qf "dangling=true")
-
 
 deploy:
 
@@ -66,3 +64,11 @@ update_all_submodules:
 	git submodule update  # Update the submodule  
 	git submodule foreach git checkout master  # Ensure subs are on master branch
 	git submodule foreach git pull origin master # Pull the latest master
+
+view_log:
+
+	docker logs $$(docker ps -qf "name=malaria_hero_api")
+
+browse_files:
+
+	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/bash
