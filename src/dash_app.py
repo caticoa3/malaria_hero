@@ -29,8 +29,8 @@ server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
 server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-external_scripts= ['https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/async.js',
-                   'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/src/assets/gtag.js']
+external_scripts= ['https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/async.js',
+                   'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/gtag.js']
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(server=server,
                 external_scripts=external_scripts,
