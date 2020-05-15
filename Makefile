@@ -12,6 +12,8 @@ setup_instance:
 build_images: 
 
 	docker-compose build 
+	docker rmi atico/malaria_hero_api
+	docker rmi nginx
 
 deploy:
 

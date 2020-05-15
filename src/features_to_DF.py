@@ -53,7 +53,7 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
             clmn_nm = ['label', 'fn']
             #print(file.is_file(), 'image found')
             features = gen.feature_gen(str(file))
-            # List of feature names: x0, x1, x2....xn, based on 
+            # List of feature names: x0, x1, x2....xn, based on
             #the number of features (n); will be used to name our DF column.
             for j in range(len(features)):
                 # print(len(row_i))
@@ -87,10 +87,10 @@ def gen_bn_features(image_dir='../datasets/cell_images/',
                   str(len_img_file - i), 'image ramain.\n', sep=' ')
         elif i > (len_img_file - 40):
             feat_df.to_csv(bn_features_file)
-        
+
         #close the tensor flow session
     gen.session_close()
-    
+
     gc.collect()
 
 

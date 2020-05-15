@@ -23,7 +23,7 @@ class FeatureGen(object):
             '../models','classify_image_graph_def.pb')
 
         with tf.compat.v1.Session() as sess:
-            with gfile.FastGFile(self.model_filename, 'rb') as f:
+            with gfile.GFile(self.model_filename, 'rb') as f:
                 graph_def = tf.compat.v1.GraphDef()
                 graph_def.ParseFromString(f.read())
                 (self.bottleneck_tensor,
@@ -42,14 +42,14 @@ class FeatureGen(object):
         return self.run_tf_model_bottleneck(img_data)
 
     def read_img_from_path(self, img_path):
-        return gfile.FastGFile(img_path, 'rb').read()
+        return gfile.GFile(img_path, 'rb').read()
 
     def run_tf_model_bottleneck(self, img_data):
         bottleneck_values = self.sess.run(
             self.bottleneck_tensor,
             {self.image_data_tensor: img_data})
         return np.squeeze(bottleneck_values)
-    
+
     def session_close(self):
         self.sess.close()
 
@@ -59,6 +59,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(sys.argv)
         exit('usage: %prog <img_path>')
-    
+
     gen = FeatureGen()
 #    print(gen.feature_gen('../../Web.jpg'))
