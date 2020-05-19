@@ -31,8 +31,9 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
         print("Please select a directory housing .png images of single cell.")
 
     print(image_dir)
-    path, dirs, files = next(os.walk("/usr/lib"))
+    path, dirs, files = next(os.walk(f'{image_dir}/unknown/'))
     file_count = len(files)
+    print(f'running in one batch: {file_count} images')
 
     # run all in one batch: make batch size = file counts
     image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
@@ -64,15 +65,15 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
 
         output_data = interpreter.get_tensor(output_details[0]['index'])
         predictions.append(output_data[0])
-
     predictions = np.vstack(predictions)
+
     positive_prob = predictions[:, 0]
     # for all images output class- 0: parasitized, 1: uninfected
     classifications = np.argmax(predictions, 1)
 
     files_processed = pd.DataFrame({'fn': unclassified_img_gen.filenames,
                                     'Predicted_label': classifications,
-                                    'Parasitized_probability': positive_prob,
+                                    'Parasitized_probability': positive_prob
                                     })
 
     # example file name: folder\C33P1thinF_IMG_20150619_114756a_cell_181.png
