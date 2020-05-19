@@ -12,8 +12,8 @@ setup_instance:
 build_images: 
 
 	docker-compose build 
-	docker rmi atico/malaria_hero_api
-	docker rmi nginx
+	docker rmi nginx:1.15.2
+	docker rmi $$(docker ps -aqf "name=atico/malaria_hero_api")
 
 deploy:
 
@@ -77,3 +77,6 @@ view_log:
 browse_files:
 
 	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/bash
+
+destroy:
+	docker rmi $$(docker images -q)
