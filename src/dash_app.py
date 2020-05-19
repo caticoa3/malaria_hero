@@ -10,7 +10,7 @@ import os
 from urllib.parse import quote as urlquote
 import dash
 from flask import Flask, send_from_directory
-from tflite_classification import tflite_img_class
+from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import dash_core_components as dcc
@@ -18,7 +18,7 @@ import dash_html_components as html
 import dash_table as dt
 import pandas as pd
 
-UPLOAD_FOLDER = '../flask/uploads/unknown'
+UPLOAD_FOLDER = '../flask/uploads'
 for setup_dir in [UPLOAD_FOLDER, '../../results/']:
     if not os.path.exists(setup_dir):
         os.makedirs(setup_dir)
@@ -29,8 +29,8 @@ server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
 server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-external_scripts= ['https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/async.js',
-                   'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/gtag.js']
+external_scripts = ['https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/async.js',
+                    'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/gtag.js']
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(server=server,
                 external_scripts=external_scripts,
@@ -199,9 +199,7 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
                              image_dir=image_dir,
                              prediction_csv='malaria.csv',
                              trained_model='../models/model.tflite',
-                             features_file1='../results/prod_test_feat.csv',
-                             min_samples1=0,
-                             training1=False)
+                             )
 
         return action_df.to_dict(orient='records')
 
