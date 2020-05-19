@@ -10,7 +10,7 @@ import os
 from urllib.parse import quote as urlquote
 import dash
 from flask import Flask, send_from_directory
-from web_img_class_API import web_img_class
+from tflite_classification import tflite_img_class
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import dash_core_components as dcc
@@ -18,8 +18,8 @@ import dash_html_components as html
 import dash_table as dt
 import pandas as pd
 
-UPLOAD_FOLDER = '../flask/uploads'
-for setup_dir in [UPLOAD_FOLDER, '../results/']:
+UPLOAD_FOLDER = '../flask/uploads/unknown'
+for setup_dir in [UPLOAD_FOLDER, '../../results/']:
     if not os.path.exists(setup_dir):
         os.makedirs(setup_dir)
 
@@ -195,10 +195,10 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
         return pred_df.to_dict(orient='records')
 #        return [html.Li('No files yet!')]
     else:
-        action_df = web_img_class(
+        action_df = tflite_img_class(
                              image_dir=image_dir,
                              prediction_csv='malaria.csv',
-                             trained_model='../models/trained_log_reg.sav',
+                             trained_model='../models/model.tflite',
                              features_file1='../results/prod_test_feat.csv',
                              min_samples1=0,
                              training1=False)
