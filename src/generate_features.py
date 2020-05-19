@@ -2,8 +2,9 @@ from __future__ import print_function
 import os
 import numpy as np
 import tensorflow as tf
+import tflite_runtime.interpreter as tflite
 from tensorflow.python.platform import gfile
-#import pandas as pd
+# import pandas as pd
 
 BOTTLENECK_TENSOR_NAME = 'pool_3/_reshape:0'
 JPEG_DATA_TENSOR_NAME = 'DecodeJpeg/contents:0'
@@ -33,6 +34,29 @@ class FeatureGen(object):
                          BOTTLENECK_TENSOR_NAME, JPEG_DATA_TENSOR_NAME,
                          RESIZED_INPUT_TENSOR_NAME])
                 self.graph = sess.graph
+
+    def load_tflit(self):
+        # Load TFLite model and allocate tensors.
+        interpreter = tflite.Interpreter(
+            model_path="../models/quantized/trained/model.tflite")
+        interpreter.allocate_tensors()
+
+        # Get input and output tensors.
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+
+        # Test model on random input data.
+        input_shape = input_details[0]['shape']
+        input_data = np.array(np.random.random_sample(input_shape), dtype=np.float32)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+
+        interpreter.invoke()
+
+        # The function `get_tensor()` returns a copy of the tensor data.
+        # Use `tensor()` in order to get a pointer to the tensor.
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        print(output_data)
+
 
     def feature_gen(self, img_path):
         """

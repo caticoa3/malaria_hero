@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 18 2018
-
 @author: carlos atico ariza
 """
 import os
 import re
 import tensorflow as tf
-import tflite_runtime.interpreter as tflite
+# import tflite_runtime.interpreter as tflite
 import numpy as np
 import pandas as pd
 import sys
@@ -50,7 +48,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
                             shuffle=False))
 
     # Load TFLite model and allocate tensors.
-    interpreter = tflite.Interpreter(model_path=trained_model)
+    interpreter = tf.lite.Interpreter(model_path=trained_model)
     interpreter.allocate_tensors()
 
     # Get input and output tensors.
@@ -69,6 +67,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
 
     predictions = np.vstack(predictions)
     positive_prob = predictions[:, 0]
+    # for all images output class- 0: parasitized, 1: uninfected
     classifications = np.argmax(predictions, 1)
 
     files_processed = pd.DataFrame({'fn': unclassified_img_gen.filenames,
@@ -76,7 +75,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
                                     'Parasitized_probability': positive_prob,
                                     })
 
-    # example file name: folder\C33P1thinF_IMG_20150619_114756a_cell_181.png,
+    # example file name: folder\C33P1thinF_IMG_20150619_114756a_cell_181.png
     def split_it(row):
         c = re.findall(r'C(\d{1,3})', row['fn'])
         patient = re.findall(r'P(\d{1,3})', row['fn'])
@@ -95,20 +94,21 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     print(files_processed.head())
     files_processed.to_csv(f'../results/predicted_{prediction_csv}')
 
-    # Groupping by Patient to give a better product application
+    # Aggregate results for each patient
     summary = pd.DataFrame()
     summary['Total Cells Examined'] = (files_processed.groupby(['Patient'])
                                        ['Predicted_label'].count())
-    summary[u'% Infected Cells'] = (files_processed.groupby('Patient')
-                                    ['Predicted_label'].sum()
-                                    / summary['Total Cells Examined'])
-
-    summary.sort_values(by='% Infected Cells', ascending=False, inplace=True)
-    # Format to two decimal places
+    summary[u'% Infected Cells'] = 100*(1 - (files_processed.groupby('Patient')
+                                        ['Predicted_label'].sum()
+                                        / summary['Total Cells Examined']))
     summary['% Infected Cells'] = summary['% Infected Cells'].map(
                                           '{:,.1f}'.format).astype(float)
-    summary.to_csv('../results/summary.csv')
+
+    summary.sort_values(by='% Infected Cells', ascending=False, inplace=True)
+    summary.reset_index(inplace=True)
+    summary.to_csv('../results/summary.csv', index=False)
     print(summary.head())
+
     # collect garbage
     del files_processed
     gc.collect()
@@ -121,5 +121,5 @@ if __name__ == '__main__':
                      trained_model=sys.argv[3])
 
 # For testing the script on command line:
-# python ../datasets/cell_images test_predictions.csv
+# python tflite_pred ../datasets/cell_images test_predictions.csv
 # ../models/trained_RF.sav
