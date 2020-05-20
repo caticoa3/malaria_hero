@@ -30,8 +30,9 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     if image_dir:
         print("Please select a directory housing .png images of single cell.")
 
+
     print(image_dir)
-    path, dirs, files = next(os.walk(f'{image_dir}/unknown/'))
+    path, dirs, files = next(os.walk(f'{image_dir}'))
     file_count = len(files)
     print(f'running in one batch: {file_count} images')
 
@@ -39,6 +40,8 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
         rescale=1. / 255)
 
+    # remove last folder, which is typically the class of the image
+    image_dir = image_dir[:-9]
     # creates a generator that modifies images to 112x112 pixels
     unclassified_img_gen = (image_generator.flow_from_directory(
                             image_dir,

@@ -9,23 +9,23 @@ RUN apt-get update && apt-get install -y \
 # Add the user that will run the app (no need to run as root)
 #RUN groupadd -r myuser && useradd -r -g myuser myuser
 
-# Set the working directory to /insight
-WORKDIR /insight
+# Set the working directory to /malaria_hero
+WORKDIR /malaria_hero
 
 # Setup environment with dependences
-ADD requirements_conda.txt /insight/
+ADD requirements_conda.txt /malaria_hero/
 RUN conda update conda
 RUN conda config --add channels conda-forge
 RUN conda config --append channels menpo
 RUN conda install --yes --quiet --file requirements_conda.txt
 RUN conda clean --yes --tarballs
 
-#Copy the $INSIGHT contents into the container at /insight
-ADD . /insight/
+#Copy the $INSIGHT contents into the container at /malaria_hero
+ADD . /malaria_hero/
 
-ENV NAME insight
+ENV NAME malaria_hero
 
-WORKDIR /insight/src/
+WORKDIR /malaria_hero/src/
 
 #CMD python dash_table.py
 #CMD python flask_app.py
