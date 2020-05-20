@@ -18,7 +18,7 @@ import dash_html_components as html
 import dash_table as dt
 import pandas as pd
 
-UPLOAD_FOLDER = '../flask/uploads'
+UPLOAD_FOLDER = '../flask/uploads/unknown/'
 for setup_dir in [UPLOAD_FOLDER, '../../results/']:
     if not os.path.exists(setup_dir):
         os.makedirs(setup_dir)
@@ -57,12 +57,16 @@ def download(path):
 
 
 # Load example results
+def bar_plot(pred_df):
+    pred_df = pred_df.sort_values('% Infected Cells')
+    pred_df['Patient'] = pred_df['Patient'].astype(str)
+    fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
+    fig.update_layout(yaxis_type='category')
+    return fig
+
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
-pred_df = pred_df.sort_values('% Infected Cells')
-pred_df['Patient'] = pred_df['Patient'].astype(str)
-fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
-fig.update_layout(yaxis_type='category')
+fig = bar_plot(pred_df)
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -81,7 +85,7 @@ ROWS = [
 
 app.layout = html.Div([
     html.H4('Malaria Hero'),
-    #    https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
+    # https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -126,7 +130,7 @@ app.layout = html.Div([
         sort_action='native',
         id='summary-table'
     ),
-    dcc.Graph(figure=fig)
+    dcc.Graph(figure=fig, id='bar-plot')
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
@@ -161,15 +165,17 @@ def file_download_link(filename):
 
 
 @app.callback(
-    Output('summary-table', 'data'),
+    [Output('summary-table', 'data'), Output('bar-plot', 'figure')],
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
 )
-def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
-                  pred_df=pred_df):
+def update_output(uploaded_filenames, uploaded_file_contents,
+                  demo_button_clicks, pred_df=pred_df):
 
-    if button_clicks > 0:
-        image_dir = '../flask/demo_images'
+    if (demo_button_clicks > 0
+        and uploaded_filenames is None
+        and uploaded_file_contents is None):
+        image_dir = '../flask/demo_images/unknown/'
     else:
         image_dir = UPLOAD_FOLDER
 
@@ -179,20 +185,21 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
 #    pd.DataFrame().to_csv('../results/prod_test.csv')
 
     """Save uploaded files and regenerate the file list."""
-
     if uploaded_filenames is not None and uploaded_file_contents is not None:
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
 
-    print(f'demo button at {button_clicks} clicks')
+
+
+    print(f'demo button at {demo_button_clicks} clicks')
 
     files = uploaded_files()
     print('files in upload folder', len(files))
     # load example results when page is first loaded
-    if (len(files) == 0) and (button_clicks == 0):
+    if (len(files) == 0) and (demo_button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.gz',
                               compression='gzip')
-        return pred_df.to_dict(orient='records')
+        return pred_df.to_dict(orient='records'), bar_plot(pred_df)
 #        return [html.Li('No files yet!')]
     else:
         action_df = tflite_img_class(
@@ -201,7 +208,7 @@ def update_output(uploaded_filenames, uploaded_file_contents, button_clicks,
                              trained_model='../models/model.tflite',
                              )
 
-        return action_df.to_dict(orient='records')
+        return action_df.to_dict(orient='records'), bar_plot(action_df)
 
 
 @app.callback(
