@@ -85,6 +85,9 @@ ROWS = [
 
 app.layout = html.Div([
     html.H4('Malaria Hero'),
+    html.P('''image file names should contain
+           P<patient number>C<area of interest>cell_<cell number>.png'''),
+    html.P('e.g. P143C4cell_8 or C5P320cell_90'),
     # https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
         id='upload-data',
