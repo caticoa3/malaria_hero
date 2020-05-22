@@ -337,7 +337,30 @@ def update_selected_row_indices(clickData, selected_row_indices):
 # plotly.offline.plot(fig)
 # #    fig['layout']['yaxis3']['type'] = 'log'
 #    return fig
-
+app.index_string = '''<!DOCTYPE html>
+<html>
+    <head>
+    {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})
+        (window,document,'script','dataLayer','UA-165365115-1');</script>
+    </head>
+    <body>
+<noscript><iframe src="https://www.googletagmanager.com/gtag/js?id=UA-165365115-1"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=5000, host='0.0.0.0')
