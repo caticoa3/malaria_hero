@@ -29,12 +29,9 @@ server.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 server.config['SECRET_KEY'] = '$PZ5v3vXTGc3'
 server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-external_scripts = ['https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/async.js',
-                    'https://cdn.jsdelivr.net/gh/caticoa3/malaria_hero/ga/gtag.js']
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(server=server,
-                external_scripts=external_scripts,
-                external_stylesheets=external_stylesheets)
+app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
+
 
 app.config['suppress_callback_exceptions'] = True
 
@@ -345,22 +342,34 @@ def update_selected_row_indices(clickData, selected_row_indices):
 app.index_string = '''<!DOCTYPE html>
 <html>
     <head>
-    {%metas%}
-        <title>Malaria Hero</title>
-        {%favicon%}
-        {%css%}
-        <script>
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-N6T2RXG');</script>
+        })(window,document,'script','dataLayer','GTM-NTTNB9F');</script>
+        <!-- End Google Tag Manager -->
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-165365115-1', 'auto');
+        ga('send', 'pageview');
+        </script>
+        <!-- End Global Google Analytics -->
+
+        {%metas%}
+        <title>Malaria Hero</title>
+        {%favicon%}
+        {%css%}
     </head>
     <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/gtag/js?id=UA-165365115-1"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
+        <!-- Google Tag Manager (noscript) -->
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NTTNB9F"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        <!-- End Google Tag Manager (noscript) -->
         {%app_entry%}
         <footer>
             {%config%}
