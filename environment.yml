@@ -1,4 +1,3 @@
-name: malaria_hero
 channels:
      - conda-forge
 dependencies:     
