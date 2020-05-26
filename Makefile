@@ -76,7 +76,7 @@ view_log:
 
 browse_files:
 
-	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/bash
+	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/sh
 
 destroy:
 
