@@ -13,7 +13,7 @@ build:
 
 	docker-compose build 
 	docker rmi nginx:1.15.2
-	docker rmi atico/malaria_hero_api:tf_lite
+	docker rmi frolvlad/alpine-miniconda3:python3.7
 
 deploy:
 
