@@ -9,11 +9,11 @@ setup_instance:
 	sudo usermod -a -G docker ec2-user
 	pip install docker-compose
 
-build_images: 
+build: 
 
 	docker-compose build 
-	docker rmi atico/malaria_hero_api
-	docker rmi nginx
+	docker rmi nginx:1.15.2
+	docker rmi atico/malaria_hero_api:tf_lite
 
 deploy:
 
@@ -23,11 +23,11 @@ deploy:
 
 update_and_deploy:
 
-	make docker_allclear
-	make build_images
+	make allclear
+	make build
 	make deploy
 
-docker_allclear:
+allclear:
 
 	@echo "take malaria_hero server down..."
 	docker stack rm malaria_hero
@@ -38,10 +38,10 @@ docker_allclear:
 	docker swarm leave -f
 
 	@echo "removing dangling docker images..."
-	docker rmi $$(docker images -qf "dangling=true")
+	docker image prune -f 
 
 	@echo "removing dangling volumes..."
-	docker volume rm $$(docker volume ls -qf "dangling=true")
+	docker volume prune -f 
 
 clear:
 
@@ -76,4 +76,8 @@ view_log:
 
 browse_files:
 
-	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/bash
+	docker exec -t -i $$(docker ps -qf "name=malaria_hero_api") /bin/sh
+
+destroy:
+
+	docker rmi $$(docker images -q)
