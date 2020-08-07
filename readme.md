@@ -6,7 +6,7 @@ Modified image from the [Center For Infectious Disease Research]('https://www.ci
 
 ## Malaria Hero
 
-A web application that classifies single cells as parasitized or normal; and prioritizes patients based on the percentage of infected infected. More background on this project can be found in this [medium post]('https://blog.insightdatascience.com/https-blog-insightdatascience-com-malaria-hero-a47d3d5fc4bb.').
+A web application that classifies single cells as parasitized or normal; and prioritizes patients based on the percentage of infected infected. More background can be found in this [medium post]('https://blog.insightdatascience.com/https-blog-insightdatascience-com-malaria-hero-a47d3d5fc4bb.').
 
 Created thanks to publicly available [data from the NIH]('https://ceb.nlm.nih.gov/repositories/malaria-datasets/').
 
