@@ -6,9 +6,11 @@ Created on Mon Sep 24 23:36:06 2018
 """
 
 import base64
+import numpy as np
 import os
 from urllib.parse import quote as urlquote
 import dash
+from PIL import Image
 from flask import Flask, send_from_directory
 from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
@@ -60,6 +62,13 @@ def bar_plot(pred_df):
     fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
     fig.update_layout(yaxis_type='category')
     return fig
+
+
+# image test
+image = '../flask/demo_images/unknown/C183P144NThinF_IMG_20151201_222119_cell_122.png'
+encoded_image = base64.b64encode(open(image, 'rb').read())
+
+html.Img(src=f'data:image/png;base64,{encoded_image.decode()}')
 
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
@@ -115,9 +124,9 @@ app.layout = html.Div([
                         },),
     html.Button(id='reset-button', n_clicks=0, children='Reset',
                 style={
-                        'margin': '10px',
-                        'fontSize': 14
-                        },),
+                       'margin': '10px',
+                       'fontSize': 14
+                       },),
     #        html.Div(id='output-image-upload'),
 
     dt.DataTable(
@@ -130,7 +139,8 @@ app.layout = html.Div([
         sort_action='native',
         id='summary-table'
     ),
-    dcc.Graph(figure=fig, id='bar-plot')
+    dcc.Graph(figure=fig, id='bar-plot'),
+    dcc.Graph(id='montage'),
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
@@ -138,6 +148,8 @@ app.layout = html.Div([
     #    html.H1('UMAP'),
     #    html.Div(id='bokeh_script',
     #             children = 'placeholder for plot')
+    html.Img(src=f'data:image/png;base64,{encoded_image.decode()}')
+
  ], className='container')
 
 
@@ -148,14 +160,13 @@ def save_file(name, content):
         fp.write(base64.decodebytes(data))
 
 
-def uploaded_files():
+def uploaded_files(directory=UPLOAD_FOLDER):
     """List the files in the upload directory."""
-    files = []
-    for filename in os.listdir(UPLOAD_FOLDER):
-        path = os.path.join(UPLOAD_FOLDER, filename)
-        if os.path.isfile(path):
-            files.append(filename)
-    return files
+    file_paths = []
+    for entry in os.scandir(directory):
+        if os.path.isfile(entry.path):
+            file_paths.append(entry.path)
+    return file_paths
 
 
 def file_download_link(filename):
@@ -164,8 +175,26 @@ def file_download_link(filename):
     return html.A(filename, href=location)
 
 
+def image_montage(image_paths):
+    im_array = []
+    print('image_paths', image_paths)
+    for p in image_paths:
+        print(p)
+        img = Image.open(p)
+        img = np.asarray_chkfinite(img.convert('RGB').copy())
+        im_array.append(img)
+    print(img)
+    print(img.shape)
+    # image have different sizes
+    im_array = np.concatenate(im_array)
+    print('im_array.shape', im_array.shape)
+    print('im_array', im_array)
+    montage = px.imshow(im_array, facet_col=0, binary_string=True)
+    return montage
+
+
 @app.callback(
-    [Output('summary-table', 'data'), Output('bar-plot', 'figure')],
+    [Output('summary-table', 'data'), Output('bar-plot', 'figure'), Output('montage', 'figure')],
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
 )
@@ -189,8 +218,6 @@ def update_output(uploaded_filenames, uploaded_file_contents,
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
 
-
-
     print(f'demo button at {demo_button_clicks} clicks')
 
     files = uploaded_files()
@@ -199,16 +226,17 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     if (len(files) == 0) and (demo_button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.gz',
                               compression='gzip')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df)
+        return pred_df.to_dict(orient='records'), bar_plot(pred_df), px.imshow([[0,0,0,0]], width=0, height=0, color_continuous_scale=None)
 #        return [html.Li('No files yet!')]
     else:
+        files = uploaded_files(image_dir)
         action_df = tflite_img_class(
                              image_dir=image_dir,
                              prediction_csv='malaria.csv',
                              trained_model='../models/model.tflite',
                              )
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df)
+        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(files)
 
 
 @app.callback(
