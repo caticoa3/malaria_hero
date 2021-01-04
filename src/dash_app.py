@@ -10,7 +10,7 @@ import numpy as np
 import os
 from urllib.parse import quote as urlquote
 import dash
-from PIL import Image
+from PIL import Image, ImageOps
 from flask import Flask, send_from_directory
 from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
@@ -64,15 +64,50 @@ def bar_plot(pred_df):
     return fig
 
 
-# image test
-image = '../flask/demo_images/unknown/C183P144NThinF_IMG_20151201_222119_cell_122.png'
-encoded_image = base64.b64encode(open(image, 'rb').read())
+def resize_image(img: Image, desired_square_size=80):
+    old_size = img.size
+    ratio = float(desired_square_size)/max(old_size)
+    new_size = tuple([int(x*ratio) for x in old_size])
+    img.thumbnail(new_size, Image.ANTIALIAS) #in-place operation
+    return img
 
-html.Img(src=f'data:image/png;base64,{encoded_image.decode()}')
+
+def pad_image(img: Image, desired_square_size=80):
+    img_size = img.size
+    delta_w = desired_square_size - img_size[0]
+    delta_h = desired_square_size - img_size[1]
+    padding = (delta_w//2, delta_h//2, delta_w - delta_w//2, delta_h - delta_h//2)
+    img = ImageOps.expand(img, padding)
+    return img
+
+
+def image_montage(image_paths):
+    im_array = []
+    print('image_paths', image_paths)
+    for p in image_paths:
+        print(p)
+        img = Image.open(p)
+        img = resize_image(img)
+        img = pad_image(img)
+        # img = img.convert('RGB')
+        img = np.array(img)
+        print('converted to np array\n', np.sum(img, axis=(0,1)))
+        print(img.shape)
+        im_array.append(img)
+
+    # image have different sizes, displaying with px.imshow only works when
+    # images are the same size.
+    im_array = np.stack(im_array)
+    print('im_array.shape', im_array.shape)
+    montage = px.imshow(im_array, facet_col=0,
+                        facet_col_wrap = 7, binary_string=True, binary_backend='pypng')
+    # montage.show()
+    return montage
 
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
 fig = bar_plot(pred_df)
+mon = image_montage(['../images/malaria_hero.jpg'])
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -137,10 +172,11 @@ app.layout = html.Div([
 
         filter_action='native',
         sort_action='native',
+        row_selectable='multi',
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    dcc.Graph(id='montage'),
+    dcc.Graph(figure=mon, id='montage'),
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
@@ -148,7 +184,6 @@ app.layout = html.Div([
     #    html.H1('UMAP'),
     #    html.Div(id='bokeh_script',
     #             children = 'placeholder for plot')
-    html.Img(src=f'data:image/png;base64,{encoded_image.decode()}')
 
  ], className='container')
 
@@ -173,24 +208,6 @@ def file_download_link(filename):
     """Create a Plotly Dash 'A' element that downloads a file from the app."""
     location = '/download/{}'.format(urlquote(filename))
     return html.A(filename, href=location)
-
-
-def image_montage(image_paths):
-    im_array = []
-    print('image_paths', image_paths)
-    for p in image_paths:
-        print(p)
-        img = Image.open(p)
-        img = np.asarray_chkfinite(img.convert('RGB').copy())
-        im_array.append(img)
-    print(img)
-    print(img.shape)
-    # image have different sizes
-    im_array = np.concatenate(im_array)
-    print('im_array.shape', im_array.shape)
-    print('im_array', im_array)
-    montage = px.imshow(im_array, facet_col=0, binary_string=True)
-    return montage
 
 
 @app.callback(
@@ -226,7 +243,7 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     if (len(files) == 0) and (demo_button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.gz',
                               compression='gzip')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df), px.imshow([[0,0,0,0]], width=0, height=0, color_continuous_scale=None)
+        return pred_df.to_dict(orient='records'), bar_plot(pred_df), image_montage(['../images/malaria_hero.jpg'])
 #        return [html.Li('No files yet!')]
     else:
         files = uploaded_files(image_dir)
@@ -304,18 +321,18 @@ def clear_upload_filename(n_clicks, input_value):
 # -- interactive table and graph creation
 
 
-@app.callback(
-    Output('summary-table', 'selected_row_indices'),
-    [Input('graph-gapminder', 'clickData')],
-    [State('summary-table', 'selected_row_indices')])
-def update_selected_row_indices(clickData, selected_row_indices):
-    if clickData:
-        for point in clickData['points']:
-            if point['pointNumber'] in selected_row_indices:
-                selected_row_indices.remove(point['pointNumber'])
-            else:
-                selected_row_indices.append(point['pointNumber'])
-    return selected_row_indices
+# @app.callback(
+    # Output('summary-table', 'selected_row_indices'),
+    # [Input('graph-gapminder', 'clickData')],
+    # [State('summary-table', 'selected_row_indices')])
+# def update_selected_row_indices(clickData, selected_row_indices):
+    # if clickData:
+        # for point in clickData['points']:
+            # if point['pointNumber'] in selected_row_indices:
+                # selected_row_indices.remove(point['pointNumber'])
+            # else:
+                # selected_row_indices.append(point['pointNumber'])
+    # return selected_row_indices
 
 
 # @app.callback(
