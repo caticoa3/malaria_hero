@@ -15,6 +15,7 @@ from flask import Flask, send_from_directory
 from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+import plotly.graph_objects as go
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
@@ -99,9 +100,15 @@ def image_montage(image_paths):
     # images are the same size.
     im_array = np.stack(im_array)
     print('im_array.shape', im_array.shape)
-    montage = px.imshow(im_array, facet_col=0,
-                        facet_col_wrap = 7, binary_string=True, binary_backend='pypng')
-    # montage.show()
+    montage = px.imshow(im_array, facet_col=0, facet_col_wrap = 7)
+    montage.for_each_annotation(lambda a: a.update(text=''))
+    # hide subplot y-axis titles and x-axis titles
+    for axis in montage.layout:
+        if type(montage.layout[axis]) == go.layout.YAxis:
+            montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+        if type(montage.layout[axis]) == go.layout.XAxis:
+            montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+
     return montage
 
 pred_df = pd.read_csv('../primed_results/init_table.gz',
@@ -172,11 +179,13 @@ app.layout = html.Div([
 
         filter_action='native',
         sort_action='native',
-        row_selectable='multi',
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    dcc.Graph(figure=mon, id='montage'),
+    html.Div(style={'height': '30%'},
+             children = dcc.Graph(figure=mon, id='montage',
+                                  style= {'height': 'inherit'})
+             ),
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
