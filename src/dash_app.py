@@ -65,7 +65,7 @@ def bar_plot(pred_df):
     return fig
 
 
-def resize_image(img: Image, desired_square_size=80):
+def resize_image(img: Image, desired_square_size=60):
     old_size = img.size
     ratio = float(desired_square_size)/max(old_size)
     new_size = tuple([int(x*ratio) for x in old_size])
@@ -73,34 +73,55 @@ def resize_image(img: Image, desired_square_size=80):
     return img
 
 
-def pad_image(img: Image, desired_square_size=80):
+def pad_image(img: Image, desired_square_size=60, prediction=0):
     img_size = img.size
     delta_w = desired_square_size - img_size[0]
     delta_h = desired_square_size - img_size[1]
     padding = (delta_w//2, delta_h//2, delta_w - delta_w//2, delta_h - delta_h//2)
-    img = ImageOps.expand(img, padding)
+    # TODO: Make the boarder a coded color according to classification
+    if prediction == 0:
+        # infected
+        border_color = '#3399ff'
+    elif prediction == 1:
+        # uninfected
+        border_color = '#ff9933'
+    img = ImageOps.expand(img, padding, border_color)
     return img
 
 
-def image_montage(image_paths):
+def image_montage(image_paths, predictions=[0]):
     im_array = []
-    print('image_paths', image_paths)
-    for p in image_paths:
-        print(p)
-        img = Image.open(p)
-        img = resize_image(img)
-        img = pad_image(img)
+    image_count = len(image_paths)
+    print('len image_paths', image_count)
+    print(f'{len(predictions)=}')
+    for im_p, pred in zip(image_paths, predictions):
+        print(im_p, pred)
+        img = Image.open(im_p)
+        img = resize_image(img, 60)
+        img = pad_image(img, 60, pred)
         # img = img.convert('RGB')
         img = np.array(img)
-        print('converted to np array\n', np.sum(img, axis=(0,1)))
-        print(img.shape)
         im_array.append(img)
+
+    if image_paths[0] == '../images/malaria_hero.jpg':
+        col_wrap = 1
+    elif image_count % 2 == 0:
+        col_wrap = image_count/2
+    else:
+        col_wrap = image_count//2 +1
+        print(f'{col_wrap=}')
+        blank_im_needed = col_wrap - image_count% col_wrap
+        print(f'{blank_im_needed=}')
+        one_blank_im = np.zeros(img.shape)
+        im_array += [one_blank_im]*blank_im_needed
 
     # image have different sizes, displaying with px.imshow only works when
     # images are the same size.
     im_array = np.stack(im_array)
     print('im_array.shape', im_array.shape)
-    montage = px.imshow(im_array, facet_col=0, facet_col_wrap = 7)
+    montage = px.imshow(im_array, facet_col=0,
+                        facet_col_spacing= 0.01,
+                        facet_col_wrap = col_wrap)
     montage.for_each_annotation(lambda a: a.update(text=''))
     # hide subplot y-axis titles and x-axis titles
     for axis in montage.layout:
@@ -108,8 +129,8 @@ def image_montage(image_paths):
             montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
         if type(montage.layout[axis]) == go.layout.XAxis:
             montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
-
     return montage
+
 
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
@@ -182,10 +203,10 @@ app.layout = html.Div([
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    html.Div(style={'height': '30%'},
-             children = dcc.Graph(figure=mon, id='montage',
-                                  style= {'height': 'inherit'})
-             ),
+    dcc.Graph(figure=mon, id='montage',
+              className= 'flex-container',
+              # style={'height': '10%'}
+              ),
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
@@ -256,13 +277,14 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 #        return [html.Li('No files yet!')]
     else:
         files = uploaded_files(image_dir)
-        action_df = tflite_img_class(
-                             image_dir=image_dir,
-                             prediction_csv='malaria.csv',
-                             trained_model='../models/model.tflite',
-                             )
+        action_df, predictions = tflite_img_class(
+                                    image_dir=image_dir,
+                                    prediction_csv='malaria.csv',
+                                    trained_model='../models/model.tflite',
+                                    )
+        print(f'{predictions=}')
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(files)
+        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(files, predictions)
 
 
 @app.callback(
@@ -328,8 +350,6 @@ def clear_upload_filename(n_clicks, input_value):
 #        return html #script
 #
 # -- interactive table and graph creation
-
-
 # @app.callback(
     # Output('summary-table', 'selected_row_indices'),
     # [Input('graph-gapminder', 'clickData')],

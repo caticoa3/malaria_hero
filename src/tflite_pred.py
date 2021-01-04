@@ -16,7 +16,7 @@ import gc
 def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
                      trained_model='../models/model.tflite',
                      ):
-    '''This function classifies if a cell is infected with the Malaria parasite
+    '''Classifies cells infected with the Malaria parasite
     using Tensor Flow lite
 
     Arguments
@@ -73,6 +73,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     positive_prob = predictions[:, 0]
     # for all images output class- 0: parasitized, 1: uninfected
     classifications = np.argmax(predictions, 1)
+    print(f'{classifications=}')
 
     files_processed = pd.DataFrame({'fn': unclassified_img_gen.filenames,
                                     'Predicted_label': classifications,
@@ -117,7 +118,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     del files_processed
     gc.collect()
 
-    return summary
+    return summary, classifications
 
 
 if __name__ == '__main__':
