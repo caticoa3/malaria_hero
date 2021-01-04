@@ -97,9 +97,9 @@ def image_montage(image_paths, predictions=[0]):
     for im_p, pred in zip(image_paths, predictions):
         print(im_p, pred)
         img = Image.open(im_p)
-        img = resize_image(img, 60)
-        img = pad_image(img, 60, pred)
-        # img = img.convert('RGB')
+        img = img.convert('RGB')
+        img = resize_image(img, 80)
+        img = pad_image(img, 80, pred)
         img = np.array(img)
         im_array.append(img)
 
@@ -109,11 +109,12 @@ def image_montage(image_paths, predictions=[0]):
         col_wrap = image_count/2
     else:
         col_wrap = image_count//2 +1
-        print(f'{col_wrap=}')
-        blank_im_needed = col_wrap - image_count% col_wrap
-        print(f'{blank_im_needed=}')
-        one_blank_im = np.zeros(img.shape)
-        im_array += [one_blank_im]*blank_im_needed
+        # # trying to find a workaround for montage layout problems
+        # blank_im_needed = col_wrap - image_count% col_wrap
+        # print(f'{blank_im_needed=}')
+        # one_blank_im = np.zeros(img.shape)
+        # im_array += [one_blank_im]*blank_im_needed
+    print(f'{col_wrap=}')
 
     # image have different sizes, displaying with px.imshow only works when
     # images are the same size.
@@ -204,8 +205,11 @@ app.layout = html.Div([
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
     dcc.Graph(figure=mon, id='montage',
-              className= 'flex-container',
-              # style={'height': '10%'}
+              # className= 'flex-container',
+              style={
+                'width': '733px',
+              # 'veritcle_spacing': 0,'position': 'flex', 'height': 'inherit'
+                }
               ),
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
@@ -215,7 +219,9 @@ app.layout = html.Div([
     #    html.Div(id='bokeh_script',
     #             children = 'placeholder for plot')
 
- ], className='container')
+ ]
+ )
+ #, className='container')
 
 
 def save_file(name, content):
