@@ -15,6 +15,7 @@ from flask import Flask, send_from_directory
 from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import dash_core_components as dcc
 import dash_html_components as html
@@ -89,7 +90,7 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
     return img
 
 
-def image_montage(image_paths, predictions=[0]):
+def image_montage(image_paths, predictions=[0], details=None):
     im_array = []
     image_count = len(image_paths)
     print('len image_paths', image_count)
@@ -122,6 +123,7 @@ def image_montage(image_paths, predictions=[0]):
     print('im_array.shape', im_array.shape)
     montage = px.imshow(im_array, facet_col=0,
                         facet_col_spacing= 0.01,
+                        facet_row_spacing= 0.02,
                         facet_col_wrap = col_wrap)
     montage.for_each_annotation(lambda a: a.update(text=''))
     # hide subplot y-axis titles and x-axis titles
@@ -204,13 +206,14 @@ app.layout = html.Div([
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    dcc.Graph(figure=mon, id='montage',
-              # className= 'flex-container',
-              style={
-                'width': '733px',
-              # 'veritcle_spacing': 0,'position': 'flex', 'height': 'inherit'
-                }
-              ),
+    # html.Div(id='montages', children=
+             dcc.Graph(figure=mon, id= 'montage',
+            # className= 'flex-container',
+            # style={'width': '733px',
+            # 'veritcle_spacing': 0,'position': 'flex', 'height': 'inherit'
+               # }
+            )
+             # )
     #    html.Div(id='selected-indexes'),
     #    dcc.Graph(
     #        id='graph-gapminder'
@@ -283,14 +286,38 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 #        return [html.Li('No files yet!')]
     else:
         files = uploaded_files(image_dir)
-        action_df, predictions = tflite_img_class(
-                                    image_dir=image_dir,
-                                    prediction_csv='malaria.csv',
-                                    trained_model='../models/model.tflite',
-                                    )
-        print(f'{predictions=}')
+        # TODO: predicitons are found in details no need to have predictions
+        # listed
+        action_df, predictions, details = tflite_img_class(
+                                        image_dir=image_dir,
+                                        prediction_csv='malaria.csv',
+                                        trained_model='../models/model.tflite',
+                                        )
+        montages = []
+        patients = list(details.Patient.unique())
+        print(f'{patients=}')
+        max_image_counts = int(details.groupby('Patient').agg('nunique')['fn'].max())
+        print(f'{max_image_counts=}')
+        go_fig = make_subplots(len(patients), max_image_counts)
+        for p_i, patient in enumerate(patients):
+            patient_filter = (details.Patient == patient)
+            patient_df = details.loc[patient_filter, ['fn','Predicted_label']]
+            for i_i, row in patient_df.reset_index().iterrows():
+                print(f'{i_i=}')
+                print(f'{row=}')
+                im_p = row.fn
+                pred = row.Predicted_label
+                print(im_p, pred)
+                img = Image.open(image_dir + im_p.split('/')[-1]).copy()
+                img = img.convert('RGB')
+                img = resize_image(img, 80)
+                img = pad_image(img, 80, pred)
+                img = np.array(img)
+                go_fig.add_trace(go.Image(z=img), p_i + 1, i_i + 1)
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(files, predictions)
+        go_fig.update_layout(height=400)
+        go_fig.show()
+        return action_df.to_dict(orient='records'), bar_plot(action_df), go_fig #montages #image_montage(files, predictions)
 
 
 @app.callback(
