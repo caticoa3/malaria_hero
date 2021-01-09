@@ -80,4 +80,4 @@ browse_files:
 
 destroy:
 
-	docker rmi $$(docker images -q)
+	docker rmi $$(docker images -qf "reference=malaria*")
