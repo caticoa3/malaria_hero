@@ -79,12 +79,9 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
     delta_w = desired_square_size - img_size[0]
     delta_h = desired_square_size - img_size[1]
     padding = (delta_w//2, delta_h//2, delta_w - delta_w//2, delta_h - delta_h//2)
-    # TODO: Make the boarder a coded color according to classification
-    if prediction == 0:
-        # infected
+    if prediction == 0: # infected
         border_color = '#3399ff'
-    elif prediction == 1:
-        # uninfected
+    elif prediction == 1: # uninfected
         border_color = '#ff9933'
     img = ImageOps.expand(img, padding, border_color)
     return img
@@ -316,90 +313,6 @@ def reset_demo_button(n_clicks, input_value):
 def clear_upload_filename(n_clicks, input_value):
     print('reset button clicked')
     return None, None
-
-
-#    [html.Li(file_download_link(filename)) for filename in files]
-# -- bokeh plot update
-# @app.callback(
-#    Output('bokeh_script', 'children'),
-#    [Input('summary-table', 'rows')],
-# )
-# def bokeh_update(rows):
-#        bn_df = pd.read_csv('../results/prod_test_feat.csv', index_col=0)
-#        pred_df = pd.DataFrame(rows)
-#        if pred_df.shape[0] > 3:
-#            #http://biobits.org/bokeh-flask.html
-#
-#            html = umap_bokeh(bn_feat = bn_df,
-#                            pred_df = pred_df,
-#                            image_folder =UPLOAD_FOLDER)
-#        else:
-#            html = 'Plotting error: At least 4 cells are need for plots.'
-# #            div = ''
-#        return html #script
-#
-# -- interactive table and graph creation
-# @app.callback(
-    # Output('summary-table', 'selected_row_indices'),
-    # [Input('graph-gapminder', 'clickData')],
-    # [State('summary-table', 'selected_row_indices')])
-# def update_selected_row_indices(clickData, selected_row_indices):
-    # if clickData:
-        # for point in clickData['points']:
-            # if point['pointNumber'] in selected_row_indices:
-                # selected_row_indices.remove(point['pointNumber'])
-            # else:
-                # selected_row_indices.append(point['pointNumber'])
-    # return selected_row_indices
-
-
-# @app.callback(
-#    Output('graph-gapminder', 'figure'),
-#    [Input('summary-table', 'rows'),
-#     Input('summary-table', 'selected_row_indices')])
-# def update_figure(rows, selected_row_indices):
-#    dff = pd.DataFrame(rows)
-#    fig = plotly.tools.make_subplots(
-#        rows=2, cols=1, #rows=3
-#        subplot_titles=('Counts',''),
-#        shared_xaxes=True)
-#
-#    marker_parasite = {'color': ['#3399ff']*len(dff)}
-#    marker_uninfected = {'color': ['#ff9933']*len(dff)}
-#
-#    for i in (selected_row_indices or []):
-#        marker_parasite['color'][i] = '#93bf2a'
-#        marker_uninfected['color'][i] = '#93bf2a'
-#
-#    mask = dff['Predicted_label']=='Parasitized'
-#
-#    c = list(dff.loc[mask,'Parasitized_probability'].values)
-#    d = list(dff.loc[~mask,'Parasitized_probability'].values)
-#    fig.append_trace({'x': c,
-#                      'type': 'histogram',
-#                      'opacity':0.75,
-#                      'marker': marker_parasite,
-#                      'name': 'Parasitized'
-#                      }, 1, 1)
-#    fig.append_trace({'x': d,
-#                      'type': 'histogram',
-#                      'opacity':0.75,
-#                      'marker': marker_uninfected,
-#                      'name': 'Uninfected'
-#                      }, 1, 1)
-#    fig.layout.update(go.Layout(barmode = 'overlay'))
-#
-#    fig['layout']['showlegend'] = True
-#    fig['layout']['height'] = 800
-#    fig['layout']['margin'] = {
-#        'l': 40,
-#        'r': 10,
-#        't': 60,
-#        'b': 200
-#    }
-# plotly.offline.plot(fig)
-# #    fig['layout']['yaxis3']['type'] = 'log'
-#    return fig
 
 
 app.index_string = '''<!DOCTYPE html>
