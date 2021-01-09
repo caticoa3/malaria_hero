@@ -90,41 +90,26 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
     return img
 
 
-def image_montage(image_paths, predictions=[0], details=None):
-    im_array = []
-    image_count = len(image_paths)
-    print('len image_paths', image_count)
-    print(f'{len(predictions)=}')
-    for im_p, pred in zip(image_paths, predictions):
-        print(im_p, pred)
-        img = Image.open(im_p)
-        img = img.convert('RGB')
-        img = resize_image(img, 80)
-        img = pad_image(img, 80, pred)
-        img = np.array(img)
-        im_array.append(img)
+def image_montage(image_dir, details):
+    patients = list(details.Patient.unique())
+    print(f'{patients=}')
+    max_image_counts = int(details.groupby('Patient').agg('nunique')['fn'].max())
+    print(f'{max_image_counts=}')
+    montage = make_subplots(len(patients), max_image_counts)
 
-    if image_paths[0] == '../images/malaria_hero.jpg':
-        col_wrap = 1
-    elif image_count % 2 == 0:
-        col_wrap = image_count/2
-    else:
-        col_wrap = image_count//2 +1
-        # # trying to find a workaround for montage layout problems
-        # blank_im_needed = col_wrap - image_count% col_wrap
-        # print(f'{blank_im_needed=}')
-        # one_blank_im = np.zeros(img.shape)
-        # im_array += [one_blank_im]*blank_im_needed
-    print(f'{col_wrap=}')
+    for p_i, patient in enumerate(patients):
+        patient_filter = (details.Patient == patient)
+        patient_df = details.loc[patient_filter, ['fn','Predicted_label']]
+        for i_i, row in patient_df.reset_index().iterrows():
+            im_p = row.fn
+            pred = row.Predicted_label
+            img_i = Image.open(image_dir + im_p.split('/')[-1]).copy()
+            img_i = img_i.convert('RGB')
+            img_i = resize_image(img_i, 50)
+            img_i = pad_image(img_i, 50, pred)
+            img_i = np.array(img_i)
+            montage.add_trace(go.Image(z=img_i), p_i + 1, i_i + 1)
 
-    # image have different sizes, displaying with px.imshow only works when
-    # images are the same size.
-    im_array = np.stack(im_array)
-    print('im_array.shape', im_array.shape)
-    montage = px.imshow(im_array, facet_col=0,
-                        facet_col_spacing= 0.01,
-                        facet_row_spacing= 0.02,
-                        facet_col_wrap = col_wrap)
     montage.for_each_annotation(lambda a: a.update(text=''))
     # hide subplot y-axis titles and x-axis titles
     for axis in montage.layout:
@@ -138,7 +123,6 @@ def image_montage(image_paths, predictions=[0], details=None):
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
 fig = bar_plot(pred_df)
-mon = image_montage(['../images/malaria_hero.jpg'])
 
 DF_SIMPLE = pd.DataFrame({
     'x': ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -206,25 +190,14 @@ app.layout = html.Div([
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    # html.Div(id='montages', children=
-             dcc.Graph(figure=mon, id= 'montage',
-            # className= 'flex-container',
-            # style={'width': '733px',
-            # 'veritcle_spacing': 0,'position': 'flex', 'height': 'inherit'
-               # }
-            )
-             # )
-    #    html.Div(id='selected-indexes'),
-    #    dcc.Graph(
-    #        id='graph-gapminder'
-    #    ),
-    #    html.H1('UMAP'),
-    #    html.Div(id='bokeh_script',
-    #             children = 'placeholder for plot')
-
+    dcc.Graph(id= 'montage',
+              style={'display' : 'flex',
+                     'flex-wrap' : 'nowrap',
+                     'flex-grow' : 0,
+                    }
+              )
  ]
- )
- #, className='container')
+ , className='container')
 
 
 def save_file(name, content):
@@ -282,8 +255,14 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     if (len(files) == 0) and (demo_button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.gz',
                               compression='gzip')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df), image_montage(['../images/malaria_hero.jpg'])
-#        return [html.Li('No files yet!')]
+        # no images to display make an empty plot
+        mon = make_subplots(1,1, print_grid=False)
+        mon.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+        mon.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+        for axis in ['xaxis', 'yaxis']:
+            mon.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+        print(f'{mon.layout=}')
+        return pred_df.to_dict(orient='records'), bar_plot(pred_df), mon
     else:
         files = uploaded_files(image_dir)
         # TODO: predicitons are found in details no need to have predictions
@@ -291,33 +270,10 @@ def update_output(uploaded_filenames, uploaded_file_contents,
         action_df, predictions, details = tflite_img_class(
                                         image_dir=image_dir,
                                         prediction_csv='malaria.csv',
-                                        trained_model='../models/model.tflite',
+                                        trained_model='../models/model.tflite'
                                         )
-        montages = []
-        patients = list(details.Patient.unique())
-        print(f'{patients=}')
-        max_image_counts = int(details.groupby('Patient').agg('nunique')['fn'].max())
-        print(f'{max_image_counts=}')
-        go_fig = make_subplots(len(patients), max_image_counts)
-        for p_i, patient in enumerate(patients):
-            patient_filter = (details.Patient == patient)
-            patient_df = details.loc[patient_filter, ['fn','Predicted_label']]
-            for i_i, row in patient_df.reset_index().iterrows():
-                print(f'{i_i=}')
-                print(f'{row=}')
-                im_p = row.fn
-                pred = row.Predicted_label
-                print(im_p, pred)
-                img = Image.open(image_dir + im_p.split('/')[-1]).copy()
-                img = img.convert('RGB')
-                img = resize_image(img, 80)
-                img = pad_image(img, 80, pred)
-                img = np.array(img)
-                go_fig.add_trace(go.Image(z=img), p_i + 1, i_i + 1)
 
-        go_fig.update_layout(height=400)
-        go_fig.show()
-        return action_df.to_dict(orient='records'), bar_plot(action_df), go_fig #montages #image_montage(files, predictions)
+        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(image_dir, details)
 
 
 @app.callback(
