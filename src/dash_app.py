@@ -228,6 +228,16 @@ def uploaded_files(directory=UPLOAD_FOLDER):
             file_paths.append(entry.path)
     return file_paths
 
+def empty_image_montage():
+    montage = make_subplots(1,1, print_grid=False)
+    montage.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    montage.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    montage.update_yaxes(showgrid=False, zeroline=False)
+    montage.update_xaxes(showgrid=False, zeroline=False)
+    for axis in ['xaxis', 'yaxis']:
+        montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+    return montage
+
 
 def file_download_link(filename):
     """Create a Plotly Dash 'A' element that downloads a file from the app."""
@@ -264,32 +274,21 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 
     files = uploaded_files()
     print('files in upload folder', len(files))
+
     # load example results when page is first loaded
     if (len(files) == 0) and (demo_button_clicks == 0):
-        pred_df = pd.read_csv('../primed_results/init_table.gz',
-                              compression='gzip')
-        # no images to display make an empty plot
-        mon = make_subplots(1,1, print_grid=False, )
-        mon.update_layout(paper_bgcolor='rgba(0,0,0,0)')
-        mon.update_layout(plot_bgcolor='rgba(0,0,0,0)')
-        mon.update_yaxes(showgrid=False, zeroline=False)
-        mon.update_xaxes(showgrid=False, zeroline=False)
-        for axis in ['xaxis', 'yaxis']:
-            mon.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
-        print(f'{mon.layout=}')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df), mon
+        pred_df = pd.read_csv('../primed_results/init_table.gz', compression='gzip')
+        return pred_df.to_dict(orient='records'), bar_plot(pred_df), empty_image_montage()
+
     else:
         files = uploaded_files(image_dir)
-        # TODO: predicitons are found in details no need to have predictions
-        # listed
         action_df, details = tflite_img_class(
                                         image_dir=image_dir,
                                         prediction_csv='malaria.csv',
                                         trained_model='../models/model.tflite'
                                         )
 
-        return (action_df.to_dict(orient='records'), bar_plot(action_df),
-                image_montage(image_dir, details, action_df))
+        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(image_dir, details, action_df)
 
 
 @app.callback(
