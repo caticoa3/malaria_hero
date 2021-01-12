@@ -113,8 +113,8 @@ def image_montage(image_dir, details, summary):
                                y=1.05 - p_i*(1/number_of_patients + 0.05), #include verticle spacing
                                showarrow=False)
         for i_i, row in patient_df.reset_index().iterrows():
-            im_p = row.fn
-            pred = row.Predicted_label
+            im_p = row['fn']
+            pred = row['Predicted_label']
             img_i = Image.open(image_dir + im_p.split('/')[-1]).copy()
             img_i = img_i.convert('RGB')
             img_i = resize_image(img_i, 50)
@@ -122,8 +122,6 @@ def image_montage(image_dir, details, summary):
             img_i = np.array(img_i)
             montage.add_trace(go.Image(z=img_i), p_i + 1, i_i + 1)
 
-
-    # montage.for_each_annotation(lambda a: a.update(text=''))
     # hide subplot y-axis titles and x-axis titles
     for axis in montage.layout:
         if type(montage.layout[axis]) == go.layout.YAxis:
@@ -155,7 +153,7 @@ ROWS = [
 app.layout = html.Div([
     html.H4('Malaria Hero'),
     html.P('''image file names should contain
-           P<patient number>C<area of interest>cell_<cell number>.png'''),
+           P<patient number>C<area on microscope slide>cell_<cell number>.png'''),
     html.P('e.g. P143C4cell_8 or C5P320cell_90'),
     # https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
@@ -203,12 +201,9 @@ app.layout = html.Div([
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    dcc.Graph(id= 'montage',
-              style={'display' : 'flex',
-                     'flex-wrap' : 'nowrap',
-                     'flex-grow' : 0,
-                    }
-              )
+    html.H5('Color-Coded Classified Cells: Parasitzed cells framed in blue',
+            id='montage_heading'),
+    dcc.Graph(id= 'montage')
  ]
  , className='container')
 
@@ -228,6 +223,7 @@ def uploaded_files(directory=UPLOAD_FOLDER):
             file_paths.append(entry.path)
     return file_paths
 
+
 def empty_image_montage():
     montage = make_subplots(1,1, print_grid=False)
     montage.update_layout(paper_bgcolor='rgba(0,0,0,0)')
@@ -246,7 +242,8 @@ def file_download_link(filename):
 
 
 @app.callback(
-    [Output('summary-table', 'data'), Output('bar-plot', 'figure'), Output('montage', 'figure')],
+    [Output('summary-table', 'data'), Output('bar-plot', 'figure'),
+     Output('montage', 'figure'), Output('montage_heading','style')],
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
 )
@@ -278,7 +275,8 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     # load example results when page is first loaded
     if (len(files) == 0) and (demo_button_clicks == 0):
         pred_df = pd.read_csv('../primed_results/init_table.gz', compression='gzip')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df), empty_image_montage()
+        return (pred_df.to_dict(orient='records'), bar_plot(pred_df),
+                empty_image_montage(), {'display':'none'})
 
     else:
         files = uploaded_files(image_dir)
@@ -288,7 +286,9 @@ def update_output(uploaded_filenames, uploaded_file_contents,
                                         trained_model='../models/model.tflite'
                                         )
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(image_dir, details, action_df)
+        return (action_df.to_dict(orient='records'), bar_plot(action_df),
+                image_montage(image_dir, details, action_df),
+                {'dipslay':'block'})
 
 
 @app.callback(

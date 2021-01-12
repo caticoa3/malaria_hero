@@ -114,9 +114,6 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     summary.to_csv('../results/summary.csv', index=False)
     print(summary.head())
 
-    # collect garbage
-    # gc.collect()
-
     return summary, files_processed
 
 
