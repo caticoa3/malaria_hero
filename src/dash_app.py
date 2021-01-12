@@ -61,8 +61,14 @@ def download(path):
 def bar_plot(pred_df):
     pred_df = pred_df.sort_values('% Infected Cells')
     pred_df['Patient'] = pred_df['Patient'].astype(str)
-    fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
+    fig = px.bar(pred_df, y='Patient', x='% Infected Cells',
+                 orientation='h')
     fig.update_layout(yaxis_type='category')
+    fig.update_yaxes(showgrid=False, zeroline=False, linecolor='gray')
+    fig.update_xaxes(showgrid=True, zeroline=False)
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    # print(fig)
     return fig
 
 
@@ -87,27 +93,37 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
     return img
 
 
-def image_montage(image_dir, details):
+def image_montage(image_dir, details, summary):
     patients = list(details.Patient.unique())
     print(f'{patients=}')
     max_image_counts = int(details.groupby('Patient').agg('nunique')['fn'].max())
     print(f'{max_image_counts=}')
-    montage = make_subplots(len(patients), max_image_counts)
+    number_of_patients = len(patients)
+    montage = make_subplots(number_of_patients, max_image_counts,
+                            vertical_spacing=0.05)
 
+    summary = summary.set_index('Patient')
     for p_i, patient in enumerate(patients):
         patient_filter = (details.Patient == patient)
         patient_df = details.loc[patient_filter, ['fn','Predicted_label']]
+        infection_rate = summary.loc[patient, '% Infected Cells']
+        montage.add_annotation(text=f"Patient {patient}: {infection_rate} % infected",
+                               xref="paper",
+                               yref="paper", x=0,
+                               y=1.05 - p_i*(1/number_of_patients + 0.05), #include verticle spacing
+                               showarrow=False)
         for i_i, row in patient_df.reset_index().iterrows():
             im_p = row.fn
             pred = row.Predicted_label
             img_i = Image.open(image_dir + im_p.split('/')[-1]).copy()
             img_i = img_i.convert('RGB')
             img_i = resize_image(img_i, 50)
-            img_i = pad_image(img_i, 50, pred)
+            img_i = pad_image(img_i, 55, pred)
             img_i = np.array(img_i)
             montage.add_trace(go.Image(z=img_i), p_i + 1, i_i + 1)
 
-    montage.for_each_annotation(lambda a: a.update(text=''))
+
+    # montage.for_each_annotation(lambda a: a.update(text=''))
     # hide subplot y-axis titles and x-axis titles
     for axis in montage.layout:
         if type(montage.layout[axis]) == go.layout.YAxis:
@@ -253,9 +269,11 @@ def update_output(uploaded_filenames, uploaded_file_contents,
         pred_df = pd.read_csv('../primed_results/init_table.gz',
                               compression='gzip')
         # no images to display make an empty plot
-        mon = make_subplots(1,1, print_grid=False)
+        mon = make_subplots(1,1, print_grid=False, )
         mon.update_layout(paper_bgcolor='rgba(0,0,0,0)')
         mon.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+        mon.update_yaxes(showgrid=False, zeroline=False)
+        mon.update_xaxes(showgrid=False, zeroline=False)
         for axis in ['xaxis', 'yaxis']:
             mon.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
         print(f'{mon.layout=}')
@@ -264,13 +282,14 @@ def update_output(uploaded_filenames, uploaded_file_contents,
         files = uploaded_files(image_dir)
         # TODO: predicitons are found in details no need to have predictions
         # listed
-        action_df, predictions, details = tflite_img_class(
+        action_df, details = tflite_img_class(
                                         image_dir=image_dir,
                                         prediction_csv='malaria.csv',
                                         trained_model='../models/model.tflite'
                                         )
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df), image_montage(image_dir, details)
+        return (action_df.to_dict(orient='records'), bar_plot(action_df),
+                image_montage(image_dir, details, action_df))
 
 
 @app.callback(

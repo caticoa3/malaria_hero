@@ -115,10 +115,9 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     print(summary.head())
 
     # collect garbage
-    del files_processed
-    gc.collect()
+    # gc.collect()
 
-    return summary, classifications
+    return summary, files_processed
 
 
 if __name__ == '__main__':
