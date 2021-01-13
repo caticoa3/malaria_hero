@@ -375,4 +375,4 @@ app.index_string = '''<!DOCTYPE html>
 '''
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8888, host='0.0.0.0')
+    app.run_server(debug=True, port=5000, host='0.0.0.0')
