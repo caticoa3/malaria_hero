@@ -15,6 +15,19 @@ build:
 	docker rmi nginx:1.15.2
 	docker rmi frolvlad/alpine-miniconda3:python3.7
 
+server_build:
+
+	# pull from atico/malaria_hero_api:tf_lite on hub.docker.com
+	docker-compose -f onserver.docker-compose.yml build
+	docker rmi nginx:1.15.2
+	docker rmi atico/malaria_hero_api:tf_lite
+
+push_image:
+
+	# pushing takes a long time, its better to let the image be built in dockerhub
+	docker tag malaria_hero_api atico/malaria_hero_api:tflite
+	docker push atico/malaria_hero_api:tflite
+
 deploy:
 
 	docker swarm init

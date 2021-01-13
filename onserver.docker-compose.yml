@@ -1,0 +1,35 @@
+version: '3.4'
+
+services:
+
+  api:
+#    container_name: malaria # Name can be anything
+    restart: always
+    image: malaria_hero_api
+    build: 
+        dockerfile: onserver.Dockerfile
+        context: .
+
+    environment:
+       PYTHONUNBUFFERED: 'true'   
+    ports:
+      - "5000:5000"
+    networks:
+      - mynetwork
+    command: gunicorn --timeout 180 --worker-class eventlet -b :5000 dash_app:server #-w 3 -t 10
+
+  nginx:
+#    container_name: nginx
+    image: malaria_hero_nginx
+    restart: always
+    build: ./nginx
+    ports:
+      - "80:8000"
+    depends_on:
+      - api
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    external: true
