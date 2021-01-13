@@ -7,7 +7,7 @@ services:
     restart: always
     image: malaria_hero_api
     build: 
-        dockerfile: Dockerfile
+        dockerfile: onserver.Dockerfile
         context: .
 
     environment:

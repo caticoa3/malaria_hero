@@ -10,13 +10,12 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import sys
-import gc
 
 
 def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
                      trained_model='../models/model.tflite',
                      ):
-    '''This function classifies if a cell is infected with the Malaria parasite
+    '''Classifies cells infected with the Malaria parasite
     using Tensor Flow lite
 
     Arguments
@@ -29,7 +28,6 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
 
     if image_dir:
         print("Please select a directory housing .png images of single cell.")
-
 
     print(image_dir)
     path, dirs, files = next(os.walk(f'{image_dir}'))
@@ -113,11 +111,7 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     summary.to_csv('../results/summary.csv', index=False)
     print(summary.head())
 
-    # collect garbage
-    del files_processed
-    gc.collect()
-
-    return summary
+    return summary, files_processed
 
 
 if __name__ == '__main__':

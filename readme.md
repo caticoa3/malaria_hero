@@ -10,4 +10,18 @@ Web application that classifies single cells as parasitized or normal; and prior
 
 Created thanks to publicly available [data from the NIH](https://ceb.nlm.nih.gov/repositories/malaria-datasets/).
 
-A live demo can be found at [malaria_hero.org](malaria_hero.org)
+## Running locally 
+### Option 1: in a python enviroment
+use the provided environment.yml to create the conda environment and run the following
+    cd src/
+    python dash_app.py 
+
+### Option 2: in a docker swarm
+    cd src/
+    make build # to build the needed containers and environment
+    make deploy # to run
+
+in both cases you can navigate to 0.0.0.0:5000 in your favorite flavor of internet browser
+
+## Demo
+A live demo can be found at [malariahero.org](malariahero.org)

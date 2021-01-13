@@ -6,13 +6,17 @@ Created on Mon Sep 24 23:36:06 2018
 """
 
 import base64
+import numpy as np
 import os
 from urllib.parse import quote as urlquote
 import dash
+from PIL import Image, ImageOps
 from flask import Flask, send_from_directory
 from tflite_pred import tflite_img_class
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
@@ -57,9 +61,79 @@ def download(path):
 def bar_plot(pred_df):
     pred_df = pred_df.sort_values('% Infected Cells')
     pred_df['Patient'] = pred_df['Patient'].astype(str)
-    fig = px.bar(pred_df, y='Patient', x='% Infected Cells', orientation='h')
+    fig = px.bar(pred_df, y='Patient', x='% Infected Cells',
+                 orientation='h')
     fig.update_layout(yaxis_type='category')
+    fig.update_yaxes(showgrid=False, zeroline=False, linecolor='gray')
+    fig.update_xaxes(showgrid=True, zeroline=False)
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    # print(fig)
     return fig
+
+
+def resize_image(img: Image, desired_square_size=60):
+    old_size = img.size
+    ratio = float(desired_square_size)/max(old_size)
+    new_size = tuple([int(x*ratio) for x in old_size])
+    img.thumbnail(new_size, Image.ANTIALIAS)  # in-place operation
+    return img
+
+
+def pad_image(img: Image, desired_square_size=60, prediction=0):
+    img_size = img.size
+    delta_w = desired_square_size - img_size[0]
+    delta_h = desired_square_size - img_size[1]
+    padding = (
+        delta_w//2,
+        delta_h//2,
+        delta_w - delta_w//2,
+        delta_h - delta_h//2)
+    if prediction == 0:  # infected
+        border_color = '#3399ff'
+    elif prediction == 1:  # uninfected
+        border_color = '#ff9933'
+    img = ImageOps.expand(img, padding, border_color)
+    return img
+
+
+def image_montage(image_dir, details, summary):
+    patients = list(details.Patient.unique())
+    max_image_counts = int(details.groupby(
+        'Patient').agg('nunique')['fn'].max())
+    number_of_patients = len(patients)
+    montage = make_subplots(number_of_patients, max_image_counts,
+                            vertical_spacing=0.05)
+
+    summary = summary.set_index('Patient')
+    for p_i, patient in enumerate(patients):
+        patient_filter = (details.Patient == patient)
+        patient_df = details.loc[patient_filter, ['fn', 'Predicted_label']]
+        infection_rate = summary.loc[patient, '% Infected Cells']
+        montage.add_annotation(text=f"Patient {patient}: {infection_rate} % infected",
+                               xref="paper",
+                               yref="paper", x=0,
+                               # include verticle spacing
+                               y=1.05 - p_i*(1/number_of_patients + 0.05),
+                               showarrow=False)
+        for i_i, row in patient_df.reset_index().iterrows():
+            im_p = row['fn']
+            pred = row['Predicted_label']
+            img_i = Image.open(image_dir + im_p.split('/')[-1]).copy()
+            img_i = img_i.convert('RGB')
+            img_i = resize_image(img_i, 50)
+            img_i = pad_image(img_i, 55, pred)
+            img_i = np.array(img_i)
+            montage.add_trace(go.Image(z=img_i), p_i + 1, i_i + 1)
+
+    # hide subplot y-axis titles and x-axis titles
+    for axis in montage.layout:
+        if isinstance(montage.layout[axis], go.layout.YAxis):
+            montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
+        if isinstance(montage.layout[axis], go.layout.XAxis):
+            montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
+    return montage
+
 
 pred_df = pd.read_csv('../primed_results/init_table.gz',
                       compression='gzip')
@@ -83,7 +157,7 @@ ROWS = [
 app.layout = html.Div([
     html.H4('Malaria Hero'),
     html.P('''image file names should contain
-           P<patient number>C<area of interest>cell_<cell number>.png'''),
+           P<patient number>C<area on microscope slide>cell_<cell number>.png'''),
     html.P('e.g. P143C4cell_8 or C5P320cell_90'),
     # https://github.com/plotly/dash-docs/blob/master/tutorial/examples/core_components/upload-image.py
     dcc.Upload(
@@ -100,14 +174,11 @@ app.layout = html.Div([
             'borderStyle': 'dashed',
             'borderRadius': '5px',
             'textAlign': 'center',
-            'margin': {
-                    'b': '10px'}
+            'margin': {'b': '10px'}
         },
         # Allow multiple files to be uploaded
         multiple=True,
         ),
-    #        html.H2('File List'),
-    #        html.Ul(id='file-list'),
     html.Button(id='demo-button', n_clicks=0, children='Demo',
                 style={
                         'margin': '10px',
@@ -115,10 +186,9 @@ app.layout = html.Div([
                         },),
     html.Button(id='reset-button', n_clicks=0, children='Reset',
                 style={
-                        'margin': '10px',
-                        'fontSize': 14
-                        },),
-    #        html.Div(id='output-image-upload'),
+                       'margin': '10px',
+                       'fontSize': 14
+                       },),
 
     dt.DataTable(
         data=pred_df.to_dict('records'),
@@ -130,14 +200,10 @@ app.layout = html.Div([
         sort_action='native',
         id='summary-table'
     ),
-    dcc.Graph(figure=fig, id='bar-plot')
-    #    html.Div(id='selected-indexes'),
-    #    dcc.Graph(
-    #        id='graph-gapminder'
-    #    ),
-    #    html.H1('UMAP'),
-    #    html.Div(id='bokeh_script',
-    #             children = 'placeholder for plot')
+    dcc.Graph(figure=fig, id='bar-plot'),
+    html.H5('Color-coded classified cells: parasitzed cells framed in blue',
+            id='montage_heading'),
+    dcc.Graph(id='montage')
  ], className='container')
 
 
@@ -148,14 +214,24 @@ def save_file(name, content):
         fp.write(base64.decodebytes(data))
 
 
-def uploaded_files():
+def uploaded_files(directory=UPLOAD_FOLDER):
     """List the files in the upload directory."""
-    files = []
-    for filename in os.listdir(UPLOAD_FOLDER):
-        path = os.path.join(UPLOAD_FOLDER, filename)
-        if os.path.isfile(path):
-            files.append(filename)
-    return files
+    file_paths = []
+    for entry in os.scandir(directory):
+        if os.path.isfile(entry.path):
+            file_paths.append(entry.path)
+    return file_paths
+
+
+def empty_image_montage():
+    montage = make_subplots(1, 1, print_grid=False)
+    montage.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    montage.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    montage.update_yaxes(showgrid=False, zeroline=False)
+    montage.update_xaxes(showgrid=False, zeroline=False)
+    for axis in ['xaxis', 'yaxis']:
+        montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
+    return montage
 
 
 def file_download_link(filename):
@@ -165,7 +241,8 @@ def file_download_link(filename):
 
 
 @app.callback(
-    [Output('summary-table', 'data'), Output('bar-plot', 'figure')],
+    [Output('summary-table', 'data'), Output('bar-plot', 'figure'),
+     Output('montage', 'figure'), Output('montage_heading', 'style')],
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
 )
@@ -174,7 +251,7 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 
     if (demo_button_clicks > 0
         and uploaded_filenames is None
-        and uploaded_file_contents is None):
+            and uploaded_file_contents is None):
         image_dir = '../flask/demo_images/unknown/'
     else:
         image_dir = UPLOAD_FOLDER
@@ -182,33 +259,36 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     '''Clear folders before saving new content'''
     for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
-#    pd.DataFrame().to_csv('../results/prod_test.csv')
 
     """Save uploaded files and regenerate the file list."""
     if uploaded_filenames is not None and uploaded_file_contents is not None:
         for name, data in zip(uploaded_filenames, uploaded_file_contents):
             save_file(name, data)
 
-
-
     print(f'demo button at {demo_button_clicks} clicks')
 
     files = uploaded_files()
     print('files in upload folder', len(files))
-    # load example results when page is first loaded
-    if (len(files) == 0) and (demo_button_clicks == 0):
-        pred_df = pd.read_csv('../primed_results/init_table.gz',
-                              compression='gzip')
-        return pred_df.to_dict(orient='records'), bar_plot(pred_df)
-#        return [html.Li('No files yet!')]
-    else:
-        action_df = tflite_img_class(
-                             image_dir=image_dir,
-                             prediction_csv='malaria.csv',
-                             trained_model='../models/model.tflite',
-                             )
 
-        return action_df.to_dict(orient='records'), bar_plot(action_df)
+    # loads example results when page is first loaded
+    if (len(files) == 0) and (demo_button_clicks == 0):
+        pred_df = pd.read_csv(
+            '../primed_results/init_table.gz',
+            compression='gzip')
+        return (pred_df.to_dict(orient='records'), bar_plot(pred_df),
+                empty_image_montage(), {'display': 'none'})
+
+    else:
+        files = uploaded_files(image_dir)
+        action_df, details = tflite_img_class(
+                                        image_dir=image_dir,
+                                        prediction_csv='malaria.csv',
+                                        trained_model='../models/model.tflite'
+                                        )
+
+        return (action_df.to_dict(orient='records'), bar_plot(action_df),
+                image_montage(image_dir, details, action_df),
+                {'dipslay': 'block'})
 
 
 @app.callback(
@@ -251,92 +331,6 @@ def reset_demo_button(n_clicks, input_value):
 def clear_upload_filename(n_clicks, input_value):
     print('reset button clicked')
     return None, None
-
-
-#    [html.Li(file_download_link(filename)) for filename in files]
-# -- bokeh plot update
-# @app.callback(
-#    Output('bokeh_script', 'children'),
-#    [Input('summary-table', 'rows')],
-# )
-# def bokeh_update(rows):
-#        bn_df = pd.read_csv('../results/prod_test_feat.csv', index_col=0)
-#        pred_df = pd.DataFrame(rows)
-#        if pred_df.shape[0] > 3:
-#            #http://biobits.org/bokeh-flask.html
-#
-#            html = umap_bokeh(bn_feat = bn_df,
-#                            pred_df = pred_df,
-#                            image_folder =UPLOAD_FOLDER)
-#        else:
-#            html = 'Plotting error: At least 4 cells are need for plots.'
-# #            div = ''
-#        return html #script
-#
-# -- interactive table and graph creation
-
-
-@app.callback(
-    Output('summary-table', 'selected_row_indices'),
-    [Input('graph-gapminder', 'clickData')],
-    [State('summary-table', 'selected_row_indices')])
-def update_selected_row_indices(clickData, selected_row_indices):
-    if clickData:
-        for point in clickData['points']:
-            if point['pointNumber'] in selected_row_indices:
-                selected_row_indices.remove(point['pointNumber'])
-            else:
-                selected_row_indices.append(point['pointNumber'])
-    return selected_row_indices
-
-
-# @app.callback(
-#    Output('graph-gapminder', 'figure'),
-#    [Input('summary-table', 'rows'),
-#     Input('summary-table', 'selected_row_indices')])
-# def update_figure(rows, selected_row_indices):
-#    dff = pd.DataFrame(rows)
-#    fig = plotly.tools.make_subplots(
-#        rows=2, cols=1, #rows=3
-#        subplot_titles=('Counts',''),
-#        shared_xaxes=True)
-#
-#    marker_parasite = {'color': ['#3399ff']*len(dff)}
-#    marker_uninfected = {'color': ['#ff9933']*len(dff)}
-#
-#    for i in (selected_row_indices or []):
-#        marker_parasite['color'][i] = '#93bf2a'
-#        marker_uninfected['color'][i] = '#93bf2a'
-#
-#    mask = dff['Predicted_label']=='Parasitized'
-#
-#    c = list(dff.loc[mask,'Parasitized_probability'].values)
-#    d = list(dff.loc[~mask,'Parasitized_probability'].values)
-#    fig.append_trace({'x': c,
-#                      'type': 'histogram',
-#                      'opacity':0.75,
-#                      'marker': marker_parasite,
-#                      'name': 'Parasitized'
-#                      }, 1, 1)
-#    fig.append_trace({'x': d,
-#                      'type': 'histogram',
-#                      'opacity':0.75,
-#                      'marker': marker_uninfected,
-#                      'name': 'Uninfected'
-#                      }, 1, 1)
-#    fig.layout.update(go.Layout(barmode = 'overlay'))
-#
-#    fig['layout']['showlegend'] = True
-#    fig['layout']['height'] = 800
-#    fig['layout']['margin'] = {
-#        'l': 40,
-#        'r': 10,
-#        't': 60,
-#        'b': 200
-#    }
-# plotly.offline.plot(fig)
-# #    fig['layout']['yaxis3']['type'] = 'log'
-#    return fig
 
 
 app.index_string = '''<!DOCTYPE html>
