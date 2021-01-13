@@ -76,7 +76,7 @@ def resize_image(img: Image, desired_square_size=60):
     old_size = img.size
     ratio = float(desired_square_size)/max(old_size)
     new_size = tuple([int(x*ratio) for x in old_size])
-    img.thumbnail(new_size, Image.ANTIALIAS) #in-place operation
+    img.thumbnail(new_size, Image.ANTIALIAS)  # in-place operation
     return img
 
 
@@ -84,10 +84,14 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
     img_size = img.size
     delta_w = desired_square_size - img_size[0]
     delta_h = desired_square_size - img_size[1]
-    padding = (delta_w//2, delta_h//2, delta_w - delta_w//2, delta_h - delta_h//2)
-    if prediction == 0: # infected
+    padding = (
+        delta_w//2,
+        delta_h//2,
+        delta_w - delta_w//2,
+        delta_h - delta_h//2)
+    if prediction == 0:  # infected
         border_color = '#3399ff'
-    elif prediction == 1: # uninfected
+    elif prediction == 1:  # uninfected
         border_color = '#ff9933'
     img = ImageOps.expand(img, padding, border_color)
     return img
@@ -95,9 +99,8 @@ def pad_image(img: Image, desired_square_size=60, prediction=0):
 
 def image_montage(image_dir, details, summary):
     patients = list(details.Patient.unique())
-    print(f'{patients=}')
-    max_image_counts = int(details.groupby('Patient').agg('nunique')['fn'].max())
-    print(f'{max_image_counts=}')
+    max_image_counts = int(details.groupby(
+        'Patient').agg('nunique')['fn'].max())
     number_of_patients = len(patients)
     montage = make_subplots(number_of_patients, max_image_counts,
                             vertical_spacing=0.05)
@@ -105,12 +108,13 @@ def image_montage(image_dir, details, summary):
     summary = summary.set_index('Patient')
     for p_i, patient in enumerate(patients):
         patient_filter = (details.Patient == patient)
-        patient_df = details.loc[patient_filter, ['fn','Predicted_label']]
+        patient_df = details.loc[patient_filter, ['fn', 'Predicted_label']]
         infection_rate = summary.loc[patient, '% Infected Cells']
         montage.add_annotation(text=f"Patient {patient}: {infection_rate} % infected",
                                xref="paper",
                                yref="paper", x=0,
-                               y=1.05 - p_i*(1/number_of_patients + 0.05), #include verticle spacing
+                               # include verticle spacing
+                               y=1.05 - p_i*(1/number_of_patients + 0.05),
                                showarrow=False)
         for i_i, row in patient_df.reset_index().iterrows():
             im_p = row['fn']
@@ -124,10 +128,10 @@ def image_montage(image_dir, details, summary):
 
     # hide subplot y-axis titles and x-axis titles
     for axis in montage.layout:
-        if type(montage.layout[axis]) == go.layout.YAxis:
-            montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
-        if type(montage.layout[axis]) == go.layout.XAxis:
-            montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+        if isinstance(montage.layout[axis], go.layout.YAxis):
+            montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
+        if isinstance(montage.layout[axis], go.layout.XAxis):
+            montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
     return montage
 
 
@@ -170,14 +174,11 @@ app.layout = html.Div([
             'borderStyle': 'dashed',
             'borderRadius': '5px',
             'textAlign': 'center',
-            'margin': {
-                    'b': '10px'}
+            'margin': {'b': '10px'}
         },
         # Allow multiple files to be uploaded
         multiple=True,
         ),
-    #        html.H2('File List'),
-    #        html.Ul(id='file-list'),
     html.Button(id='demo-button', n_clicks=0, children='Demo',
                 style={
                         'margin': '10px',
@@ -188,7 +189,6 @@ app.layout = html.Div([
                        'margin': '10px',
                        'fontSize': 14
                        },),
-    #        html.Div(id='output-image-upload'),
 
     dt.DataTable(
         data=pred_df.to_dict('records'),
@@ -201,11 +201,10 @@ app.layout = html.Div([
         id='summary-table'
     ),
     dcc.Graph(figure=fig, id='bar-plot'),
-    html.H5('Color-Coded Classified Cells: Parasitzed cells framed in blue',
+    html.H5('Color-coded classified cells: parasitzed cells framed in blue',
             id='montage_heading'),
-    dcc.Graph(id= 'montage')
- ]
- , className='container')
+    dcc.Graph(id='montage')
+ ], className='container')
 
 
 def save_file(name, content):
@@ -225,13 +224,13 @@ def uploaded_files(directory=UPLOAD_FOLDER):
 
 
 def empty_image_montage():
-    montage = make_subplots(1,1, print_grid=False)
+    montage = make_subplots(1, 1, print_grid=False)
     montage.update_layout(paper_bgcolor='rgba(0,0,0,0)')
     montage.update_layout(plot_bgcolor='rgba(0,0,0,0)')
     montage.update_yaxes(showgrid=False, zeroline=False)
     montage.update_xaxes(showgrid=False, zeroline=False)
     for axis in ['xaxis', 'yaxis']:
-        montage.layout[axis].tickfont = dict(color = 'rgba(0,0,0,0)')
+        montage.layout[axis].tickfont = dict(color='rgba(0,0,0,0)')
     return montage
 
 
@@ -243,7 +242,7 @@ def file_download_link(filename):
 
 @app.callback(
     [Output('summary-table', 'data'), Output('bar-plot', 'figure'),
-     Output('montage', 'figure'), Output('montage_heading','style')],
+     Output('montage', 'figure'), Output('montage_heading', 'style')],
     [Input('upload-data', 'filename'), Input('upload-data', 'contents'),
      Input('demo-button', 'n_clicks')],
 )
@@ -252,7 +251,7 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 
     if (demo_button_clicks > 0
         and uploaded_filenames is None
-        and uploaded_file_contents is None):
+            and uploaded_file_contents is None):
         image_dir = '../flask/demo_images/unknown/'
     else:
         image_dir = UPLOAD_FOLDER
@@ -260,7 +259,6 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     '''Clear folders before saving new content'''
     for folder in [UPLOAD_FOLDER, '../results/']:
         clear_folder(folder)
-#    pd.DataFrame().to_csv('../results/prod_test.csv')
 
     """Save uploaded files and regenerate the file list."""
     if uploaded_filenames is not None and uploaded_file_contents is not None:
@@ -272,11 +270,13 @@ def update_output(uploaded_filenames, uploaded_file_contents,
     files = uploaded_files()
     print('files in upload folder', len(files))
 
-    # load example results when page is first loaded
+    # loads example results when page is first loaded
     if (len(files) == 0) and (demo_button_clicks == 0):
-        pred_df = pd.read_csv('../primed_results/init_table.gz', compression='gzip')
+        pred_df = pd.read_csv(
+            '../primed_results/init_table.gz',
+            compression='gzip')
         return (pred_df.to_dict(orient='records'), bar_plot(pred_df),
-                empty_image_montage(), {'display':'none'})
+                empty_image_montage(), {'display': 'none'})
 
     else:
         files = uploaded_files(image_dir)
@@ -288,7 +288,7 @@ def update_output(uploaded_filenames, uploaded_file_contents,
 
         return (action_df.to_dict(orient='records'), bar_plot(action_df),
                 image_montage(image_dir, details, action_df),
-                {'dipslay':'block'})
+                {'dipslay': 'block'})
 
 
 @app.callback(
@@ -375,4 +375,4 @@ app.index_string = '''<!DOCTYPE html>
 '''
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=5000, host='0.0.0.0')
+    app.run_server(debug=True, port=8888, host='0.0.0.0')

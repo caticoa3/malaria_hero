@@ -10,7 +10,6 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import sys
-import gc
 
 
 def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
@@ -29,7 +28,6 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
 
     if image_dir:
         print("Please select a directory housing .png images of single cell.")
-
 
     print(image_dir)
     path, dirs, files = next(os.walk(f'{image_dir}'))
@@ -73,7 +71,6 @@ def tflite_img_class(image_dir=[], prediction_csv='malaria.csv',
     positive_prob = predictions[:, 0]
     # for all images output class- 0: parasitized, 1: uninfected
     classifications = np.argmax(predictions, 1)
-    print(f'{classifications=}')
 
     files_processed = pd.DataFrame({'fn': unclassified_img_gen.filenames,
                                     'Predicted_label': classifications,
