@@ -24,4 +24,4 @@ use the provided environment.yml to create the conda environment and run the fol
 in both cases you can navigate to 0.0.0.0:5000 in your favorite flavor of internet browser
 
 ## Demo
-A live demo can be found at [malariahero.org](malariahero.org)
+A live demo can be found at [malariahero.org](http://malariahero.org)
