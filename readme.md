@@ -13,13 +13,17 @@ Created thanks to publicly available [data from the NIH](https://ceb.nlm.nih.gov
 ## Running locally 
 ### Option 1: in a python enviroment
 use the provided environment.yml to create the conda environment and run the following
-    cd src/
-    python dash_app.py 
+```
+cd src/
+python dash_app.py 
+```
 
 ### Option 2: in a docker swarm
-    cd src/
-    make build # to build the needed containers and environment
-    make deploy # to run
+```
+cd src/
+make build # to build the needed containers and environment
+make deploy # to run
+```
 
 in both cases you can navigate to 0.0.0.0:5000 in your favorite flavor of internet browser
 
