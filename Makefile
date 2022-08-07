@@ -94,3 +94,10 @@ browse_files:
 destroy:
 
 	docker rmi $$(docker images -qf "reference=malaria*")
+
+deploy_gcp:
+
+	docker build -f Dockerfile -t gcr.io/malaria-hero/mh_api:0 .
+	docker push gcr.io/malaria-hero/mh_api:0
+	gcloud run deploy malaria-hero --image=gcr.io/malaria-hero/mh_api:0 --platform=managed --region=us-west1 ;\
+	--timeout=60 --concurrency=5 --cpu=2 --memory=1024Mi --max-instances=4 --allow-unauthenticated 
